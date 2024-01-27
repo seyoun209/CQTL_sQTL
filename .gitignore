@@ -3,4 +3,5 @@ output/*
 .snakemake/
 env/
 samplesheet.txt
-*snakefiles/utils/__pycache__* 
+*snakefiles/utils/__pycache__*
+tools/ 

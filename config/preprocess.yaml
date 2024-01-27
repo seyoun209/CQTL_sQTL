@@ -1,0 +1,37 @@
+## Path to sample sheet
+samplesheet: 'samplesheet.txt'
+
+## Indicate whether the options for rmats for t and read lengths
+t: 'paired'
+readlength: 100
+control: 'CTL'
+case: 'OA'
+
+## Variant parameters
+vcf: '/proj/phanstiel_lab/Data/processed/CQTL/geno/CQTL_COA_01_GDA8_COA2_01_COA3_01_GDA8_COA4_COA5_COA6_COA7/vcf/CQTL_COA_01_GDA8_COA2_01_COA3_01_GDA8_COA4_COA5_COA6_COA7_ALL_qc.vcf.gz' # Path to imputed genotyping vcf
+
+vcf_sample_exclude: "0_6_chQTL_AM7366_D,0_16_chQTL_AM7636_D_1"
+
+## Genome-specific reference files
+gtf: '/work/users/s/e/seyoun/Ref/genome/gencode.v45.annotation.gtf'
+star: '/work/users/s/e/seyoun/Ref/genome/STAR_idx'
+starsjdb: '/work/users/s/e/seyoun/Ref/genome/STAR_idx/sjdbList.fromGTF.out.tab'
+
+
+##salmon options
+salmon: '/work/users/s/e/seyoun/Ref/genome/salmon_idx'
+gcBias: 'TRUE'
+seqBias: 'TRUE'
+
+
+## Software versions
+fastqcVers: "0.11.9"
+starVers: "2.7.7a "
+samtoolsVers: "1.9"
+trim_galore: "0.6.7"
+multiqcVers: "1.7"
+rVers: "4.3.1"
+
+
+
+
