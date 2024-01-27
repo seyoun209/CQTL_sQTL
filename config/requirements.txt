@@ -1,0 +1,4 @@
+snakemake==5.10.0
+pandas
+kneed
+wheel

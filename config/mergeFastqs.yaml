@@ -1,0 +1,34 @@
+## change the samplesheet name, filenamesfom, mergeby 
+  
+## Path to sample sheet
+samplesheet: 'samplesheet.txt'
+
+## List columns to group (i.e. any columns left out will become part of the same group)
+## set mergeBy: '' for no merging
+mergeBy: ['Donor','Condition','Tech_Rep','Sex']
+
+## Indicate whether to create stranded signal tracks
+#stranded: True # False
+
+## Indicate whether the options for rmats for t and read lengths 
+t: 'paired'
+readlength: 100
+control: 'CTL'
+case: 'OA'
+
+
+## Genome-specific reference parameters
+salmon: '/work/users/s/e/seyoun/Ref/genome/salmon_idx'
+gtf: '/work/users/s/e/seyoun/Ref/genome/gencode.v45.annotation.gtf'
+star: '/work/users/s/e/seyoun/Ref/genome/STAR_idx'
+starsjdb: '/work/users/s/e/seyoun/Ref/genome/STAR_idx/sjdbList.fromGTF.out.tab'
+
+
+## Software versions
+fastqcVers: "0.11.9"
+starVers: "2.7.7a "
+samtoolsVers: "1.17"
+trim_galore: "0.6.7"
+multiqcVers: "1.5"
+rVers: "4.3.1"
+

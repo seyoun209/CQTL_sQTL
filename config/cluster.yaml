@@ -1,0 +1,21 @@
+__default__:
+  name: "{rule},{wildcards}" # -J
+  partition: general # -p
+  time: 4320 # -t
+  cpusPerTask: "{threads}" # -c
+  memPerCpu: 4G # --mem-per-cpu
+  nodes: 1
+  ntasks: 1
+  output: "output/logs_slurm/{rule}.{wildcards}.{jobid}.out"
+  error: "output/logs_slurm/{rule}.{wildcards}.{jobid}.err"
+
+## Multi-threaded / High-memory Rules
+quant:
+  memPerCpu: 20G
+
+align:
+  memPerCpu: 8G
+
+rmats:
+  memPerCpu: 8G
+

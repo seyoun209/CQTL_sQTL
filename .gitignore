@@ -1,0 +1,6 @@
+output/*
+*.out
+.snakemake/
+env/
+samplesheet.txt
+*snakefiles/utils/__pycache__* 
