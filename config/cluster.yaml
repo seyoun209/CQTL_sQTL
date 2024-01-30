@@ -14,8 +14,13 @@ quant:
   memPerCpu: 20G
 
 align:
-  memPerCpu: 8G
+  memPerCpu: 12G
 
-rmats:
-  memPerCpu: 8G
+reheader:
+  memPerCpu: 50G
+
+index:
+  memPerCpu: 5G
+
+
 
