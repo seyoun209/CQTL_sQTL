@@ -1,1 +1,15 @@
-N
+3/31/17 - fishback
+  
+http://genetics.cs.ucla.edu/caviar/
+
+cd dist
+wget https://github.com/fhormoz/caviar/archive/master.zip
+cd ..
+unzip dist/master.zip
+
+#module add gcc gsl
+cd caviar-master/CAVIAR-C++
+make clean   (remove the original binaries)
+make
+ldd eCAVIAR CAVIAR
+cp eCAVIAR CAVIAR /nas/longleaf/apps/caviar/1.0/
