@@ -1,11 +1,11 @@
 #! /bin/bash -login
 #SBATCH -J rna_process
-#SBATCH -t 4320
+#SBATCH -t 11-00:00:00
 #SBATCH -N 1
-#SBATCH -n 4
-#SBATCH -c 1  
+#SBATCH -n 1
+#SBATCH -c 2  
 #SBATCH -p general
-#SBATCH --mem=2gb
+#SBATCH --mem=4gb
 #SBATCH -o "%x-%j.out"
 
 ## Exit if any command fails
@@ -24,7 +24,11 @@ mkdir -p output/logs_slurm
 
 
 ## Execute RNApipeCore snakemake workflow
-snakemake -s snakefiles/RNA_preprocess.snakefile --configfile "config/rna_prcoess.yaml" --cluster-config "config/cluster.yaml" --cluster "sbatch -J {cluster.name} -p {cluster.partition} -t {cluster.time} -c {cluster.cpusPerTask} --mem-per-cpu={cluster.memPerCpu} -N {cluster.nodes} --output {cluster.output} --error {cluster.error} --parsable" --cluster-status snakefiles/utils/status.py -j 222 --max-jobs-per-second 5 --max-status-checks-per-second 5 --rerun-incomplete -p --latency-wait 700 
+
+
+
+
+snakemake -s snakefiles/RNA_preprocess.snakefile --configfile "config/rna_prcoess.yaml" --cluster-config "config/cluster.yaml" --cluster "sbatch -J {cluster.name} -p {cluster.partition} -t {cluster.time} -c {cluster.cpusPerTask} --mem-per-cpu={cluster.memPerCpu} -N {cluster.nodes} --output {cluster.output} --error {cluster.error} --parsable" --cluster-status snakefiles/utils/status.py -j 120 --max-jobs-per-second 5 --max-status-checks-per-second 5 --rerun-incomplete -p --latency-wait 500
 
 ## Success message
 echo "Workflow completed successfully!"

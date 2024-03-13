@@ -17,10 +17,43 @@ align:
   memPerCpu: 12G
 
 reheader:
-  memPerCpu: 50G
+  memPerCpu: 10G
 
 index:
   memPerCpu: 5G
+
+verifybamid:
+  memPerCpu: 15G
+  time: "11-00:00:00"
+
+multiqc:
+  memPerCpu: 4G
+
+mergeSignal:
+  memPerCpu: 8G
+  time: "11-00:00:00"
+
+mergeForwadSignal:
+  memPerCpu: 16G
+  time: "11-00:00:00"
+
+mergeReverseSignal:
+  memPerCpu: 16G
+  time: "11-00:00:00"
+
+mergeSignal_norm:
+  memPerCpu: 8G
+  time: "11-00:00:00"
+
+cluster_prepare:
+  memPerCpu: 8G
+
+
+
+ 
+
+
+
 
 
 
