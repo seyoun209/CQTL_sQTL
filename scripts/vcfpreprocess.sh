@@ -53,9 +53,14 @@ bcftools reheader --sample $5/04.final/sample_nm.txt $5/04.final/finalFiltered.v
 
 tabix -p vcf $5/04.final/snpfiltered_renamed.vcf.gz
 
+bcftools annotate $5/04.final/snpfiltered_renamed.vcf.gz --rename-chrs /work/users/s/e/seyoun/CQTL_sQTL/scripts/chrnm.txt -Oz -o $5/04.final/snpfiltered_renamed_wCHR.vcf.gz
+
+tabix -p vcf $5/04.final/snpfiltered_renamed_wCHR.vcf.gz
+
+
 # make it noindels
 
-vcftools --gzvcf $5/04.final/snpfiltered_renamed.vcf.gz --remove-indels --recode --recode-INFO-all --out $5/04.final/snpfiltered_wCHR_no_indels.final
+vcftools --gzvcf $5/04.final/snpfiltered_renamed_wCHR.vcf.gz --remove-indels --recode --recode-INFO-all --out $5/04.final/snpfiltered_wCHR_no_indels.final
 
 
 bgzip $5/04.final/snpfiltered_wCHR_no_indels.final.recode.vcf

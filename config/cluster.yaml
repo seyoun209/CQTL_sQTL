@@ -48,6 +48,13 @@ mergeSignal_norm:
 cluster_prepare:
   memPerCpu: 8G
 
+run_qtltools:
+  memPerCpu: 8G
+
+run_qtltools_wasp:
+  memPerCpu: 8G
+
+
 
 
  

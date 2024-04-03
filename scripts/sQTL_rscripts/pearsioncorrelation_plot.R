@@ -67,7 +67,7 @@ combined_data <- combined_data %>%
 # Omit samples and filter rows based on configuration and conditions
 combined_data <- combined_data[!combined_data$Donor %in% config$samples_to_omit, ] %>%
   filter(Condition %in% conditions_to_include)
-
+save(combined_data, file = "combined_meta_data.RData")
 # Select and rename columns dynamically, based on the use of wasp ID
 selected_columns <- c("ID","Condition","Sex", "Age","Race","OAGradeAvg","CauseOfDeath","FragmentBatch","RIN","RNAextractionKitBatch","RNAshippedDate")
 selected_columns_wasp <- c("ID_wasp","Condition","Sex", "Age","Race","OAGradeAvg","CauseOfDeath","FragmentBatch","RIN","RNAextractionKitBatch","RNAshippedDate")

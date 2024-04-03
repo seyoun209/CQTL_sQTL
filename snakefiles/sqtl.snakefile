@@ -23,7 +23,11 @@ rule all:
         expand("output/01.qtltools_re/nominal_pbs_wasp/pc{pc}/chr{chr}.pbs.cis", pc=range(1, 21), chr=CHR_VALUES),
         expand("output/01.qtltools_re/nominal_fnf_wasp/pc{pc}/chr{chr}.fnf.cis", pc=range(1, 21), chr=CHR_VALUES),
         expand("output/01.qtltools_re/perm_pbs_wasp/pc{pc}/chr{chr}.pbs.perm", pc=range(1, 21), chr=CHR_VALUES),
-        expand("output/01.qtltools_re/perm_fnf_wasp/pc{pc}/chr{chr}.fnf.perm", pc=range(1, 21), chr=CHR_VALUES)
+        expand("output/01.qtltools_re/perm_fnf_wasp/pc{pc}/chr{chr}.fnf.perm", pc=range(1, 21), chr=CHR_VALUES),
+        "output/01.qtltools_re/01.significant/pbs_0.05_pc5.significant.txt",
+        "output/01.qtltools_re/01.significant/pbs_0.05_pc5.thresholds.txt",
+        "output/01.qtltools_re/01.significant/fnf_0.05_pc4.significant.txt",
+        "output/01.qtltools_re/01.significant/fnf_0.05_pc4.thresholds.txt"
         
 
 rule create_vcf:
@@ -322,4 +326,35 @@ rule run_qtltools_wasp:
         QTLtools cis --vcf {input.vcf_pbs} --bed {input.bed} --cov {input.cov} --window 100000 --out {output.perm_pbs} --permute 1000 > {log.err3} 2>&1
         QTLtools cis --vcf {input.vcf_fnf} --bed {input.bed} --cov {input.cov} --window 100000 --out {output.perm_fnf} --permute 1000 > {log.err4} 2>&1
         """
+
+rule runFDR_sig:
+    input:
+        perm_pbs="output/01.qtltools_re/perm_pbs/pc5_allchr.pbs.perm",
+        perm_fnf="output/01.qtltools_re/perm_fnf/pc4_allchr.fnf.perm"
+    output:
+        pbs_sig="output/01.qtltools_re/01.significant/pbs_0.05_pc5.significant.txt",
+        pbs_thres="output/01.qtltools_re/01.significant/pbs_0.05_pc5.thresholds.txt",
+        fnf_sig="output/01.qtltools_re/01.significant/fnf_0.05_pc4.significant.txt",
+        fnf_thres="output/01.qtltools_re/01.significant/fnf_0.05_pc4.thresholds.txt"
+    log:
+        err1="output/logs/runFDR_pbs_0.05.err",
+        err2="output/logs/runFDR_fnf_0.05.err"
+    params:
+        qtltoolsVer=config['qtltools'],
+        rVers=config['rVers'],
+        calc_R="scripts/sQTL_rscripts/runFDR_cis.R"
+    shell:
+        """
+        module load qtltools/{params.qtltoolsVer}
+        ml r/{params.rVers}
+
+        mkdir -p output/01.qtltools_re/01.significant
+        #gzip -c {input.perm_pbs}
+        #gzip -c {input.perm_fnf}
+
+        Rscript {params.calc_R} {input.perm_pbs} 0.05 output/01.qtltools_re/01.significant/pbs_0.05_pc5 > {log.err1} 2>&1
+        Rscript {params.calc_R} {input.perm_fnf} 0.05 output/01.qtltools_re/01.significant/fnf_0.05_pc4 > {log.err2} 2>&1
+
+        """
+
 
