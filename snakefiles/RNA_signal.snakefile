@@ -138,7 +138,7 @@ rule mergeForwadSignal:
         mkdir -p output/signals/strand
         
             
-        bamCoverage --filterRNAstrand forward -b {input.bam} -o {output.signal_fw} > {log.err1} 2>&1
+        bamCoverage --filterRNAstrand forward bamCoverage --normalizeUsing BPM --binSize 10 --effectiveGenomeSize 2862010578 -b {input.bam} -o {output.signal_fw} > {log.err1} 2>&1
         
 
         """
@@ -158,7 +158,7 @@ rule mergeReverseSignal:
         mkdir -p output/signals/strand
         
 
-        bamCoverage --filterRNAstrand reverse -b {input.bam} -o {output.signal_rv} > {log.err1} 2>&1
+        bamCoverage --filterRNAstrand reverse bamCoverage --normalizeUsing BPM --binSize 10 --effectiveGenomeSize 2862010578 -b {input.bam} -o {output.signal_rv} > {log.err1} 2>&1
         
             
         """
@@ -177,6 +177,6 @@ rule mergeSignal_norm:
         module load deeptools/{params.deeptools_ver}
         mkdir -p output/signals/merged_norm
 
-        bamCoverage -b {input.bam} -o {output.signal} > {log.err1} 2>&1
+        bamCoverage --normalizeUsing BPM --binSize 10 --effectiveGenomeSize 2862010578 --bam {input.bam} -o {output.signal} > {log.err1} 2>&1
         """
 

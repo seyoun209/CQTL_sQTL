@@ -14,8 +14,10 @@ rule all:
         "output/geno/oa_geno/04.final/snpfiltered_wCHR_no_indels.final.recode.vcf.gz",
         "output/geno/oa_geno/oa_rename_101_wCHR.vcf.gz",
         "output/geno/oa_geno/oa_rename_101.vcf.gz",
-        #expand("output/gtex_cluster/qtltools_prep/covariates_PC{pc}",pc=range(1,21)),
-        #expand("output/gtex_cluster_wasp/qtltools_prep/covariates_PC{pc}",pc=range(1,21))
+        #"output/gtex_cluster/qtltools_prep/covariates_PC1",
+        #"output/gtex_cluster_wasp/qtltools_prep/covariates_PC1"
+        expand("output/gtex_cluster/qtltools_prep/covariates_PC{pc}",pc=range(1,21)),
+        expand("output/gtex_cluster_wasp/qtltools_prep/covariates_PC{pc}",pc=range(1,21)),
         expand("output/01.qtltools_re/nominal_pbs/pc{pc}/chr{chr}.pbs.cis", pc=range(1, 21), chr=CHR_VALUES),
         expand("output/01.qtltools_re/nominal_fnf/pc{pc}/chr{chr}.fnf.cis", pc=range(1, 21), chr=CHR_VALUES),
         expand("output/01.qtltools_re/perm_pbs/pc{pc}/chr{chr}.pbs.perm", pc=range(1, 21), chr=CHR_VALUES),
@@ -24,10 +26,8 @@ rule all:
         expand("output/01.qtltools_re/nominal_fnf_wasp/pc{pc}/chr{chr}.fnf.cis", pc=range(1, 21), chr=CHR_VALUES),
         expand("output/01.qtltools_re/perm_pbs_wasp/pc{pc}/chr{chr}.pbs.perm", pc=range(1, 21), chr=CHR_VALUES),
         expand("output/01.qtltools_re/perm_fnf_wasp/pc{pc}/chr{chr}.fnf.perm", pc=range(1, 21), chr=CHR_VALUES),
-        "output/01.qtltools_re/01.significant/pbs_0.05_pc5.significant.txt",
-        "output/01.qtltools_re/01.significant/pbs_0.05_pc5.thresholds.txt",
-        "output/01.qtltools_re/01.significant/fnf_0.05_pc4.significant.txt",
-        "output/01.qtltools_re/01.significant/fnf_0.05_pc4.thresholds.txt"
+        expand("output/01.qtltools_re/conditional_pbs/chr{chr}_pbs_condtional.txt",chr=CHR_VALUES),
+        expand("output/01.qtltools_re/conditional_fnf/chr{chr}_fnf_condtional.txt",chr=CHR_VALUES)
         
 
 rule create_vcf:
@@ -204,57 +204,55 @@ rule cluster_prepare:
         """
 
 
-rule leafcutter_qqnorm:
-    input:
-        count= rules.cluster_prepare.output.cluster,
-        count_wasp= rules.cluster_prepare.output.cluster_wasp
-    output:
-        qqnorm= '/output/gtex_cluster/ctl_fnf_perind.counts.filtered.gz_prepare.sh',
-        qqnorm_wasp= 'output/gtex_cluster_wasp/ctl_fnf_perind.counts.filtered.gz_prepare.sh'
-    log:
-        err1="output/logs/qqnorm_leafcutter.err",
-        err2="output/logs/qqnorm_wasp_leafcutter.err"
-    params:
-        pVers=config['pythonVers'],
-        rVers=config['rVers'],
-        leafcutterDir=config['leafcutter']
-    shell:
-        """
-        ml python/{params.pVers}
-        ml r/{params.rVers}
-        
-        python3 {params.leafcutterDir}scripts/prepare_phenotype_table.py {input.count} -p20 > {log.err1} 2>&1
-        #sh output/gtex_cluster/ctl_fnf_perind.counts.filtered.gz_prepare.sh
-        echo {output.qqnorm}
-        python3 {params.leafcutterDir}scripts/prepare_phenotype_table.py {input.count_wasp} -p20 > {log.err2} 2>&1
-        #sh output/gtex_cluster_wasp/ctl_fnf_perind.counts.filtered.gz_prepare.sh
-        #echo {output.qqnorm_wasp}
-
-        """
+#rule leafcutter_qqnorm:
+#    input:
+#        count= rules.cluster_prepare.output.cluster,
+#        count_wasp= rules.cluster_prepare.output.cluster_wasp
+#    output:
+#        qqnorm= '/output/gtex_cluster/ctl_fnf_perind.counts.filtered.gz_prepare.sh',
+#        qqnorm_wasp= 'output/gtex_cluster_wasp/ctl_fnf_perind.counts.filtered.gz_prepare.sh'
+#    log:
+#        err1="output/logs/qqnorm_leafcutter.err",
+#        err2="output/logs/qqnorm_wasp_leafcutter.err"
+#    params:
+#        pVers=config['pythonVers'],
+#        rVers=config['rVers'],
+#        leafcutterDir=config['leafcutter']
+#    shell:
+#        """
+#        ml python/{params.pVers}
+#        ml r/{params.rVers}
+#        
+#        python3 {params.leafcutterDir}scripts/prepare_phenotype_table.py {input.count} -p20 > {log.err1} 2>&1
+#        #sh output/gtex_cluster/ctl_fnf_perind.counts.filtered.gz_prepare.sh
+#        echo {output.qqnorm}
+#        python3 {params.leafcutterDir}scripts/prepare_phenotype_table.py {input.count_wasp} -p20 > {log.err2} 2>&1
+#        #sh output/gtex_cluster_wasp/ctl_fnf_perind.counts.filtered.gz_prepare.sh
+#        #echo {output.qqnorm_wasp}
+#
+#        """
 
 
 rule prep_qtltools:
     input:
-        bed=rules.cluster_prepare.output.bed,
-        bed_wasp=rules.cluster_prepare.output.bed_wasp,
         pca=rules.cluster_prepare.output.pca,
         pca_wasp=rules.cluster_prepare.output.pca_wasp
     output:
         cov= "output/gtex_cluster/qtltools_prep/covariates_PC1",
-        cov_wasp="output/gtex_cluster/qtltools_prep_wasp/covariates_PC1"
+        cov_wasp="output/gtex_cluster_wasp/qtltools_prep/covariates_PC1"
     log:
-        err1="output/logs/qtlprep.err",
-        err2="output/logs/qtlprep_wasp.err"
+        err1="output/logs/qtlprep_PC.err",
+        err2="output/logs/qtlprep_wasp_PC.err"
     
     params:
         rVers=config['rVers'] 
     shell:
         """
         ml r/{params.rVers}
-        Rscript scripts/sQTL_rscripts/bedfile_seperatebyCHR.R {input.bed} output/gtex_cluster/qtltools_prep {input.pca} > {log.err1} 2>&1
+        Rscript scripts/sQTL_rscripts/bedfile_seperatebyCHR.R /work/users/s/e/seyoun/CQTL_sQTL/output/gtex_cluster/ output/gtex_cluster/qtltools_prep {input.pca} > {log.err1} 2>&1
         sh output/gtex_cluster/qtltools_prep/tabix.sh
 
-        Rscript scripts/sQTL_rscripts/bedfile_seperatebyCHR.R {input.bed_wasp} output/gtex_cluster_wasp/qtltools_prep {input.pca_wasp} wasp > {log.err2} 2>&1
+        Rscript scripts/sQTL_rscripts/bedfile_seperatebyCHR.R /work/users/s/e/seyoun/CQTL_sQTL/output/gtex_cluster_wasp/ output/gtex_cluster_wasp/qtltools_prep {input.pca_wasp} wasp > {log.err2} 2>&1
         sh output/gtex_cluster_wasp/qtltools_prep/tabix.sh
         """
 
@@ -264,7 +262,7 @@ rule run_qtltools:
         vcf_pbs=rules.re_processVCF.output.pbs_fi_vcf,
         vcf_fnf=rules.re_processVCF.output.fnf_fi_vcf,
         cov="output/gtex_cluster/qtltools_prep/covariates_PC{pc}",
-        bed= "output/gtex_cluster/qtltools_prep/ctrvsfnf_qqnorm_chr{chr}.bed.gz"
+        bed="output/gtex_cluster/qtltools_prep/ctrvsfnf_qqnorm_chr{chr}.bed.gz"
     output:
         nominal_pbs="output/01.qtltools_re/nominal_pbs/pc{pc}/chr{chr}.pbs.cis",
         nominal_fnf="output/01.qtltools_re/nominal_fnf/pc{pc}/chr{chr}.fnf.cis",
@@ -287,8 +285,8 @@ rule run_qtltools:
         mkdir -p output/01.qtltools_re/perm_pbs/pc{wildcards.pc}
         mkdir -p output/01.qtltools_re/perm_fnf/pc{wildcards.pc}
 
-        QTLtools cis --vcf {input.vcf_pbs} --bed {input.bed} --cov {input.cov} --window 100000 --out {output.nominal_pbs} --nominal 1.0 > {log.err1} 2>&1
-        QTLtools cis --vcf {input.vcf_fnf} --bed {input.bed} --cov {input.cov} --window 100000 --out {output.nominal_fnf} --nominal 1.0 > {log.err2} 2>&1
+        QTLtools cis --vcf {input.vcf_pbs} --bed {input.bed} --cov {input.cov} --window 100000 --out {output.nominal_pbs} --nominal 1.0 --std-err > {log.err1} 2>&1
+        QTLtools cis --vcf {input.vcf_fnf} --bed {input.bed} --cov {input.cov} --window 100000 --out {output.nominal_fnf} --nominal 1.0 --std-err > {log.err2} 2>&1
         QTLtools cis --vcf {input.vcf_pbs} --bed {input.bed} --cov {input.cov} --window 100000 --out {output.perm_pbs} --permute 1000 > {log.err3} 2>&1
         QTLtools cis --vcf {input.vcf_fnf} --bed {input.bed} --cov {input.cov} --window 100000 --out {output.perm_fnf} --permute 1000 > {log.err4} 2>&1
         """
@@ -298,7 +296,7 @@ rule run_qtltools_wasp:
         vcf_pbs=rules.re_processVCF.output.pbs_fi_vcf,
         vcf_fnf=rules.re_processVCF.output.fnf_fi_vcf,
         cov="output/gtex_cluster_wasp/qtltools_prep/covariates_PC{pc}",
-        bed= "output/gtex_cluster_wasp/qtltools_prep/ctrvsfnf_qqnorm_chr{chr}.bed.gz"
+        bed="output/gtex_cluster_wasp/qtltools_prep/ctrvsfnf_qqnorm_chr{chr}.bed.gz"
     output:
         nominal_pbs="output/01.qtltools_re/nominal_pbs_wasp/pc{pc}/chr{chr}.pbs.cis",
         nominal_fnf="output/01.qtltools_re/nominal_fnf_wasp/pc{pc}/chr{chr}.fnf.cis",
@@ -321,10 +319,10 @@ rule run_qtltools_wasp:
         mkdir -p output/01.qtltools_re/perm_pbs_wasp/pc{wildcards.pc}
         mkdir -p output/01.qtltools_re/perm_fnf_wasp/pc{wildcards.pc}
 
-        QTLtools cis --vcf {input.vcf_pbs} --bed {input.bed} --cov {input.cov} --window 100000 --out {output.nominal_pbs} --nominal 1.0 > {log.err1} 2>&1
-        QTLtools cis --vcf {input.vcf_fnf} --bed {input.bed} --cov {input.cov} --window 100000 --out {output.nominal_fnf} --nominal 1.0 > {log.err2} 2>&1
-        QTLtools cis --vcf {input.vcf_pbs} --bed {input.bed} --cov {input.cov} --window 100000 --out {output.perm_pbs} --permute 1000 > {log.err3} 2>&1
-        QTLtools cis --vcf {input.vcf_fnf} --bed {input.bed} --cov {input.cov} --window 100000 --out {output.perm_fnf} --permute 1000 > {log.err4} 2>&1
+        QTLtools cis --vcf {input.vcf_pbs} --bed {input.bed} --cov {input.cov} --window 100000 --out {output.nominal_pbs} --nominal 1.0 --std-err > {log.err1} 2>&1
+        QTLtools cis --vcf {input.vcf_fnf} --bed {input.bed} --cov {input.cov} --window 100000 --out {output.nominal_fnf} --nominal 1.0 --std-err > {log.err2} 2>&1
+        QTLtools cis --vcf {input.vcf_pbs} --bed {input.bed} --cov {input.cov} --window 100000 --out {output.perm_pbs} --permute 1000 --std-err > {log.err3} 2>&1
+        QTLtools cis --vcf {input.vcf_fnf} --bed {input.bed} --cov {input.cov} --window 100000 --out {output.perm_fnf} --permute 1000 --std-err > {log.err4} 2>&1
         """
 
 rule runFDR_sig:
@@ -357,4 +355,31 @@ rule runFDR_sig:
 
         """
 
+rule runConditional:
+    input:
+        thres_pbs=rules.runFDR_sig.output.pbs_thres,
+        thres_fnf=rules.runFDR_sig.output.fnf_thres,
+        vcf_pbs=rules.re_processVCF.output.pbs_fi_vcf,
+        vcf_fnf=rules.re_processVCF.output.fnf_fi_vcf,
+        cov_pbs="output/gtex_cluster/qtltools_prep/covariates_PC5",
+        cov_fnf="output/gtex_cluster/qtltools_prep/covariates_PC4",
+        bed="output/gtex_cluster/qtltools_prep/ctrvsfnf_qqnorm_chr{chr}.bed.gz"
+    output:
+        cond_pbs="output/01.qtltools_re/conditional_pbs/chr{chr}_pbs_condtional.txt",
+        cond_fnf="output/01.qtltools_re/conditional_fnf/chr{chr}_fnf_condtional.txt"
+    log:
+        err1="output/logs/conditional_chr{chr}_pbs.err",
+        err2="output/logs/conditional_chr{chr}_fnf.err"
+    params:
+        qtltoolsVer=config['qtltools']
+    shell:
+        """
+        module load qtltools/{params.qtltoolsVer}
 
+        mkdir -p output/01.qtltools_re/conditional_pbs
+        mkdir -p output/01.qtltools_re/conditional_fnf;
+
+ 
+        QTLtools cis --vcf {input.vcf_pbs} --bed {input.bed}  --cov {input.cov_pbs} --mapping {input.thres_pbs} --window 100000 --out {output.cond_pbs} > {log.err1} 2>&1
+        QTLtools cis --vcf {input.vcf_fnf} --bed {input.bed}  --cov {input.cov_fnf} --mapping {input.thres_fnf} --window 100000 --out {output.cond_fnf} > {log.err2} 2>&1
+       """ 

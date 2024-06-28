@@ -13,27 +13,58 @@ library(readr)
 #  "/work/users/s/e/seyoun/CQTL_sQTL/output/gtex_cluster_wasp/ctl_fnf.leafcutter.PCs.txt",
 #  "wasp"
 #  )
+# 
+# args <- c("/work/users/s/e/seyoun/CQTL_sQTL/output/gtex_cluster/",
+#           "ctl_fnf_perind.counts.filtered.gz.qqnorm*",
+#           "/work/users/s/e/seyoun/CQTL_sQTL/output/gtex_cluster/qtltools_prep",
+#           "/work/users/s/e/seyoun/CQTL_sQTL/output/gtex_cluster/ctl_fnf.leafcutter.PCs.txt",
+#           "wasp"
+# )
+
 
 args <- commandArgs(trailingOnly = TRUE)
 print(args)
-#qqnorm_path <- args[1]
-bed_file <- fread(args[1]) |> as.data.frame()
+qqnorm_path <- args[1]
+#bed_file <- fread(args[1]) |> as.data.frame()
+pattern <- "ctl_fnf_perind.counts.filtered.gz.qqnorm*"
 bed_dir <- args[2]
 pc_dir <- args[3]
 #pc_dir_wasp <- args[4]
 use_wasp_id  <- tail(args, 1) == "wasp"
 
-bed_file$strand <- do.call(rbind,strsplit(do.call(rbind,strsplit(bed_file$ID, ":"))[,4],"_"))[,3]
-bed_file$geneID <- do.call(rbind,strsplit(bed_file$ID, ":"))[,5]
-bed_file_reordered <- bed_file[, c("#chr", "start", "end", "ID", "geneID", "strand", setdiff(colnames(bed_file), c("#chr", "start", "end", "ID", "geneID", "strand")))]
 
-chromosome_names <- bed_file_reordered$`#chr` |> unique() 
+if (!dir.exists(bed_dir)) {
+  dir.create(bed_dir, recursive = TRUE)
+}
 
-dir.create(bed_dir, showWarnings = FALSE)
+file_list <- list.files(qqnorm_path, pattern = pattern, full.names = TRUE)
+filtered_files <- grep("\\.tbi$", file_list, value = TRUE, invert = TRUE)
+print(filtered_files)
+
+chromosome_names <- c("chr1","chr2","chr3","chr4","chr5","chr6","chr7","chr8","chr9","chr10",
+                      "chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18","chr19","chr20","chr21","chr22")
+
 for (chr_name in chromosome_names) {
-  # Filter bed_file_reordered for the current chromosome
+  filtered_fi <- grep(paste0(chr_name, "\\b"), filtered_files, value = TRUE)
+  filtered_fi <- gsub("//", "/", filtered_fi)
+  if (length(filtered_fi) > 0) {
+    bed_file <- fread(filtered_fi[1]) |> as.data.frame()  # Ensure at least one file is there
+    # Remaining processing...
+  } else {
+    cat("No files found for", chr_name, "\n")
+  }
+}
+
+for (chr_name in chromosome_names) {
+  filtered_fi <- grep(paste0(chr_name,"\\b"), filtered_files, value = TRUE)
+  filtered_fi <- gsub("//", "/", filtered_fi)
+  bed_file <- fread(filtered_fi) |> as.data.frame()
+  bed_file$strand <- do.call(rbind,strsplit(do.call(rbind,strsplit(bed_file$ID, ":"))[,4],"_"))[,3]
+  bed_file$clusterID <- do.call(rbind,strsplit(bed_file$ID, ":"))[,4]
+  bed_file_reordered <- bed_file[, c("#Chr", "start", "end", "ID", "clusterID", "strand", setdiff(colnames(bed_file), c("#Chr", "start", "end", "ID", "clusterID", "strand")))]
+  
   chr_bed <- bed_file_reordered %>%
-    filter(`#chr` == chr_name)
+    filter(`#Chr` == chr_name)
   
   # Define BED file name
   bed_file_name <- paste0("ctrvsfnf_qqnorm_", chr_name, ".bed")
@@ -45,6 +76,8 @@ for (chr_name in chromosome_names) {
   tabix_command <- paste0("tabix -p bed ", bed_file_path, ".gz")
   cat(tabix_command, "\n", file = paste0(bed_dir,"/","tabix.sh"), append = TRUE)
 }
+
+
 
 #-------------------------------------------------------------------------------
 # adding covariates

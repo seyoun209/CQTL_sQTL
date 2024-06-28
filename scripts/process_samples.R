@@ -13,10 +13,18 @@ conditions_to_include <- unlist(strsplit(args[4], " ")) # Split the first argume
 use_wasp_id <- tail(args, 1) == "wasp" # Check if the last argument is "wasp"
 
 # Correctly adjust additional_confounds based on the presence of "wasp"
-if(use_wasp_id) {
-  additional_confounds <- args[5:(length(args) - 1)] # Exclude last argument if it's "wasp"
+if (use_wasp_id) {
+  if (length(args) > 5) {
+    additional_confounds <- args[5:(length(args) - 1)] # Exclude last argument if it's "wasp"
+  } else {
+    additional_confounds <- character(0) # No additional confounds
+  }
 } else {
-  additional_confounds <- args[5:length(args)] # Include all remaining arguments otherwise
+  if (length(args) > 4) {
+    additional_confounds <- args[5:length(args)] # Include all remaining arguments otherwise
+  } else {
+    additional_confounds <- character(0) # No additional confounds
+  }
 }
 
 library(dplyr)

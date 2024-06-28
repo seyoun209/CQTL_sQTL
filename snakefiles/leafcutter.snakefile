@@ -111,10 +111,10 @@ rule diff_leafcutter:
         """
         ml r/{params.rVers}
         ml python/{params.pVers}
-        Rscript scripts/process_samples.R ./aligned_samplesheet.txt "./donor_samples.txt" "./rna_extraction.txt" "CTL FNF" FragmentBatch RNAextractionKitBatch > {log.err_txt1} 2>&1
-        Rscript scripts/process_samples.R ./aligned_samplesheet.txt "./donor_samples.txt" "./rna_extraction.txt" "CTL OA" FragmentBatch RNAextractionKitBatch  > {log.err_txt2} 2>&1
-       Rscript scripts/process_samples.R ./aligned_samplesheet.txt "./donor_samples.txt" "./rna_extraction.txt" "CTL FNF" FragmentBatch RNAextractionKitBatch wasp > {log.err_txt3} 2>&1
-        Rscript scripts/process_samples.R ./aligned_samplesheet.txt "./donor_samples.txt" "./rna_extraction.txt" "CTL OA" FragmentBatch RNAextractionKitBatch wasp > {log.err_txt4} 2>&1
+        Rscript scripts/process_samples.R ./aligned_samplesheet.txt "./donor_samples.txt" "./rna_extraction.txt" "CTL FNF" > {log.err_txt1} 2>&1
+        Rscript scripts/process_samples.R ./aligned_samplesheet.txt "./donor_samples.txt" "./rna_extraction.txt" "CTL OA"  > {log.err_txt2} 2>&1
+       Rscript scripts/process_samples.R ./aligned_samplesheet.txt "./donor_samples.txt" "./rna_extraction.txt" "CTL FNF" wasp > {log.err_txt3} 2>&1
+        Rscript scripts/process_samples.R ./aligned_samplesheet.txt "./donor_samples.txt" "./rna_extraction.txt" "CTL OA" wasp > {log.err_txt4} 2>&1
  
 
 

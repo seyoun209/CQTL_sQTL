@@ -54,6 +54,10 @@ run_qtltools:
 run_qtltools_wasp:
   memPerCpu: 8G
 
+leafviz:
+  memPerCpu: 8G
+  ntask: 8
+
 
 
 

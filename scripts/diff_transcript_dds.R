@@ -62,7 +62,6 @@ file.exists(coldata$files)
 ## Import data with tximeta & summarize to gene
 se <- tximeta(coldata)
 gse <- summarizeToGene(se)
-
 #-------------------------------------------------------------------------------
 #  Transcript LEVEL
 #-------------------------------------------------------------------------------
@@ -93,27 +92,7 @@ ntd_update <- rownames_to_column(as.data.frame(assay(ntd)),"ENST")
 fwrite(vsd_update,file="output/quant/normalized_vst_transcript.txt",sep="\t",quote=F,row.names=T,col.names=T)
 fwrite(ntd_update,file="output/quant/normalized_log2_transcript.txt",sep="\t",quote=F,row.names=T,col.names=T)
 
-#-------------------------------------------------------------------------------
-#  Gene LEVEL
-#-------------------------------------------------------------------------------
-## Convert to factors (avoids a warning)
-colData(gse)[] <- lapply(colData(gse), factor)
 
-## Build DESeq object
-dds_gene <- DESeqDataSet(gse, design = ~ Condition+Donor)
-
-## Filter out lowly expressed genes
-## (at least 10 counts in at least 2 samples)
-keep <- rowSums(counts(dds_gene) >= 10) >= ceiling(nrow(colData(gse))*0.10)
-dds_gene <- dds_gene[keep,]
-
-## Fit model
-dds_gene <- DESeq(dds_gene)
-## Save dds
-save(dds_gene, file = "output/quant/differential_gene_expression_dds.rda")
-
-load("output/quant/differential_gene_expression_dds.rda")
-#------------------------------------------------------------------------------
 #Differential gene expression
 de_genes_shrink <- lfcShrink(dds_gene,
                              coef = "Condition_FNF_vs_CTL", format = "GRanges") |>
@@ -122,15 +101,15 @@ de_genes_shrink <- lfcShrink(dds_gene,
 ## outputs
 # res <- results(dds_gene, name ="Condition_WD_vs_KD" )
 # summary(res)
-res <- lfcShrink(dds_gene, coef="Condition_FNF_vs_CTL")
+res <- lfcShrink(dds, coef="Condition_FNF_vs_CTL")
 summary(res)
 DESeq2::plotMA(res,ylim=c(-2,2),main = "Differential RNAseq CTL vs FNF Analysis",
                ylab = "LFC",
                xlab = "mean of norm. counts")
 
 ## plot PCA
-plotPCA(normTransform(dds_gene), intgroup = "Condition",ntop=23036 ) + ggplot2::theme(aspect.ratio = 1)
-plotPCA(normTransform(dds_gene), intgroup = "Condition",ntop=500) + ggplot2::theme(aspect.ratio = 1)
+#plotPCA(normTransform(dds_gene), intgroup = "Condition",ntop=23036 ) + ggplot2::theme(aspect.ratio = 1)
+#plotPCA(normTransform(dds_gene), intgroup = "Condition",ntop=500) + ggplot2::theme(aspect.ratio = 1)
 
 # Join results with gene info
 de_genes_shrink <-
@@ -142,81 +121,15 @@ de_genes_shrink <-
   keepStandardChromosomes(pruning.mode = "coarse") %>%
   as.data.frame()
 
-write_csv(de_genes_shrink, file = "output/quant/de_genes_results.csv")
-de_genes_shrink <- read.table("/work/users/s/e/seyoun/CQTL_sQTL/output/quant/de_genes_results.csv",header=T,sep=",") |> as.data.frame()
+write_csv(de_genes_shrink, file = "output/quant/de_transcript_results.csv")
+#de_genes_shrink <- read.table("/work/users/s/e/seyoun/CQTL_sQTL/output/quant/de_genes_results.csv",header=T,sep=",") |> as.data.frame()
 # Get significant genes
-sig_deGenes_pval01_l2fc15 <- de_genes_shrink |> 
-  dplyr::filter(padj < 0.01 & abs(log2FoldChange) > 1.5) |> 
-  write_csv("/work/users/s/e/seyoun/CQTL_sQTL/output/quant/sig_deGenes_pval01_l2fc15.csv")
-sig_deGenes_pval01_l2fc1.2 <- de_genes_shrink |> 
-  dplyr::filter(padj < 0.01 & abs(log2FoldChange) > 1.2) |> 
-  write_csv("/work/users/s/e/seyoun/CQTL_sQTL/output/quant/sig_deGenes_pval01_l2fc1.2.csv")
-
-
-# Split into upregulated and downregulated
-downsig_deGenes_pval01_l2fc15 <- sig_deGenes_pval01_l2fc15 |> 
-  filter(log2FoldChange < 0) |> 
-  write_csv("output/quant/downsig_deGenes_pval01_l2fc15.csv")
-upsig_deGenes_pval01_l2fc15 <- sig_deGenes_pval01_l2fc15 |> 
-  filter(log2FoldChange > 0) |> 
-  write_csv("output/quant/upsig_deGenes_pval01_l2fc15.csv")
-#-------------------------------------------------------------------------------
-
-vsd_gene <- vst(dds_gene, blind=FALSE)
-ntd_gene <- normTransform(dds_gene)
-vsd_gene_update <- rownames_to_column(as.data.frame(assay(vsd_gene)),"ENSG")
-ntd_gene_update <- rownames_to_column(as.data.frame(assay(ntd_gene)),"ENSG")
-
-fwrite(vsd_gene_update,file="output/quant/normalized_vst_gene.txt",sep="\t",quote=F,row.names=F,col.names=T)
-fwrite(ntd_gene_update,file="output/quant/normalized_log2_gene.txt",sep="\t",quote=F,row.names=F,col.names=T)
-
-
-
-
-#-------------------------------------------------------------------------------
-#For the qPCR, trying to find the gene expression in boxplot
-ENSG00000112592.15 #TBP
-ENSG00000104852.15 #SNRNP70
-ENSG00000164924.18 #YWHAZ
-ENSG00000111640.15 #GAPDH
-
-gene_mapping <- data.frame(
-  ENSG = c("ENSG00000112592.15", "ENSG00000104852.15", "ENSG00000164924.18", "ENSG00000111640.15"),
-  GeneName = c("TBP", "SNRNP70", "YWHAZ", "GAPDH")
-)
-gene_exp_sub <- vsd_gene_update %>%
-  left_join(gene_mapping, by = "ENSG") %>%
-  filter(GeneName %in% gene_mapping$GeneName)
-
-long_data <- pivot_longer(gene_exp_sub, 
-                          cols = -c(ENSG, GeneName), 
-                          names_to = "Sample", 
-                          values_to = "Expression")
-
-
-summary_stats <- long_data %>%
-  group_by(GeneName) %>%
-  summarise(mean_gene_exp = mean(Expression, na.rm = TRUE),
-            se_gene = sd(Expression, na.rm = TRUE) / sqrt(sum(!is.na(Expression))),
-            .groups = 'drop')
-
-ggplot(long_data, aes(x = GeneName, y = Expression, fill = GeneName)) +
-  geom_violin(trim = FALSE) +
-  stat_summary(fun = mean, geom = "point", shape = 23, size = 3, color = "black") +
-  geom_text(data = summary_stats, 
-            aes(x = GeneName, label = sprintf("%.1f", mean_gene_exp), y = mean_gene_exp + se_gene, group = GeneName), 
-            position = position_dodge(width = 0.7), vjust = -4)+
-  theme_minimal() +
-  labs(title = "Expression of Selected Genes", 
-       x = "Gene", 
-       y = "Expression Level") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-
-#Finding the differential gene expression
-res <- results(dds, name="condition_trt_vs_untrt")
-
-
+#sig_deGenes_pval01_l2fc15 <- de_genes_shrink |>
+#  dplyr::filter(padj < 0.01 & abs(log2FoldChange) > 1.5) |>
+#  write_csv("/work/users/s/e/seyoun/CQTL_sQTL/output/quant/sig_deGenes_pval01_l2fc15.csv")
+#sig_deGenes_pval01_l2fc1.2 <- de_genes_shrink |>
+#  dplyr::filter(padj < 0.01 & abs(log2FoldChange) > 1.2) |>
+#  write_csv("/work/users/s/e/seyoun/CQTL_sQTL/output/quant/sig_deGenes_pval01_l2fc1.2.csv")
 
 
 
