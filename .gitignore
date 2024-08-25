@@ -11,3 +11,5 @@ tools/
 *_intersect
 *.bed
 *.RData
+*external_data/*
+*.Rdata
