@@ -109,7 +109,7 @@ cat("  * pval1 = ", mean(pval1,na.rm = T), " +/- ", sd(pval1,na.rm = T), "\n")
 D$nthresholds = pval1
 
 #Write significant hits
-fout1=paste(opt_output, "significant.txt", sep=".")
+fout1=paste(opt_output, "significant.txt", sep=".")ls
 cat("\nWrite significant hits in [", fout1, "]\n");
 write.table(D[which(D$qval <= opt_fdr),], fout1, quote=FALSE, row.names=FALSE, col.names=FALSE)
 

@@ -6,3 +6,8 @@ samplesheet.txt
 *snakefiles/utils/__pycache__*
 tools/
 *rmats* 
+*rmats_e*
+*rmats_o*
+*_intersect
+*.bed
+*.RData

@@ -153,6 +153,8 @@ if (!identical(rownames(ebsea.out_fnf$ExonTable), original_order)) {
 group_fnf <- as.factor(ebsea.out_fnf$Group)
 exon.table_fnf <- ebsea.out_fnf$ExonTable
 exon.table_fnf$GeneExon <- row.names(exon.table_fnf)
+
+save(exon.table_fnf, file="featurecounts_snrnp70/exon.table.fnf")
 gene <- 'SNRNP70'
 #Fetching Information
 gene.exons_fnf <- exon.table_fnf[grep(gene, exon.table_fnf$GeneExon, fixed = TRUE), , drop = FALSE]
@@ -217,6 +219,8 @@ if (!identical(rownames(ebsea.out_oa$ExonTable), original_order)) {
 group_oa <- as.factor(ebsea.out_oa$Group)
 exon.table_oa <- ebsea.out_oa$ExonTable
 exon.table_oa$GeneExon <- row.names(exon.table_oa)
+
+save(exon.table_oa, file="featurecounts_snrnp70/exon.table_oa")
 gene <- 'SNRNP70'
 # Fetching Information
 gene.exons_oa <- exon.table_oa[grep(gene, exon.table_oa$GeneExon, fixed = TRUE), , drop = FALSE]

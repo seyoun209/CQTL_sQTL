@@ -181,7 +181,8 @@ introns_fnf_pval_include <- join_introns_deltapsi_fdr(limma_psi_batchremove.df,i
 #save(introns_fnf_pval_include, file="./output/clu_fnf/introns_fnf_joinAll")
 #-------------------------------------------------------------------------------
 #finding the significant
-introns_fnf_sig <- introns_fnf_pval_include %>% dplyr::filter(p.adjust <= 0.05)
+load("output/clu_fnf/introns_fnf_joinAll")
+introns_fnf_sig <- introns_fnf_pval_include %>% dplyr::filter(p.adjust < 0.05)
 fnf_maxCluster <- introns_fnf_sig %>%
   mutate(abs_deltapsi = abs(deltapsi_batch)) %>%  # Add a new column for the absolute value of deltapsi
   group_by(clusterID) %>%
@@ -192,13 +193,13 @@ fnf_maxCluster <- introns_fnf_sig %>%
   # Optionally, remove the abs_deltapsi column if it's no longer needed
   dplyr::select(-abs_deltapsi)
 
-sig_psi_maxCluster <- fnf_maxCluster[abs(fnf_maxCluster$deltapsi_batch) >= 0.15,]
+sig_psi_maxCluster <- fnf_maxCluster[abs(fnf_maxCluster$deltapsi_batch) > 0.2,]
 #Gene for the cluster Max
 sig_psi_maxCluster_nodot <- sig_psi_maxCluster %>%
   mutate(ensemblID = sub("\\..*$", "", ensemblID))
 sig_gene_20_percent_diff <- sig_psi_maxCluster_nodot$ensemblID |> unique()  #Save it to ENSG
 
-sig_psi_maxCluste_psi15 <- fnf_maxCluster[abs(fnf_maxCluster$deltapsi_batch) >= 0.15,]
+sig_psi_maxCluste_psi15 <- fnf_maxCluster[abs(fnf_maxCluster$deltapsi_batch) > 0.15,]
 #Gene for the cluster Max
 sig_psi_maxCluster_nodot_psi15 <- sig_psi_maxCluste_psi15 %>%
   mutate(ensemblID = sub("\\..*$", "", ensemblID))
@@ -210,7 +211,7 @@ write.table(sig_gene_15_percent_diff, file = "output/clu_fnf/sig_gene_15_percent
 #-------------------------------------------------------------------------------
 #This is finding all the intron junctions that are FDR < 0.05 and deltaPSI > 20%
 
-introns_fnf_all_sig <- introns_fnf_sig %>% dplyr::filter(abs(deltapsi_batch) >= 0.15)
+introns_fnf_all_sig <- introns_fnf_sig %>% dplyr::filter(abs(deltapsi_batch) > 0.15)
 
 #read the meta data for the Age, sex, Ancestry
 load("output/combined_meta_data.RData") # It is loading name is combined_data
@@ -550,7 +551,7 @@ pdf(file = "output/results_plots/Figure1_differntial_splicing/figure1.pdf",   # 
     width = 11.5, # The width of the plot in inches
     height = 9.7)
 pageCreate(width = 11.5, height = 9.7, showGuides = FALSE)
-plotText("A", x = 0.1, y = 0.1, just = c("left", "top"), fontfamily = "Helvetica",
+plotText("a", x = 0.1, y = 0.1, just = c("left", "top"), fontfamily = "Helvetica",
          fontsize = 14, fontface = "bold")
 load(file="output/results_plots/Figure1_differntial_splicing/heatmapGrob.rda")
 load(file="output/results_plots/Figure1_differntial_splicing/heatmapLegendGrob.rda")

@@ -77,7 +77,8 @@ save(combined_data, file = "combined_meta_data.RData")
 selected_columns <- c("ID","Condition","Sex", "Age","Race","OAGradeAvg","CauseOfDeath","FragmentBatch","RIN","RNAextractionKitBatch","RNAshippedDate")
 selected_columns_wasp <- c("ID_wasp","Condition","Sex", "Age","Race","OAGradeAvg","CauseOfDeath","FragmentBatch","RIN","RNAextractionKitBatch","RNAshippedDate")
 final_meta_data <- combined_data %>% dplyr::select(all_of(selected_columns))
-meta_cqtl_ancetry_only <- meta_cqtl %>% dplyr::select(ID,Predicted_Ancestry) %>% dplyr::select()
+meta_cqtl <- fread("clu_fnf/meta_cqtl")
+meta_cqtl_ancetry_only <- meta_cqtl %>% dplyr::select(ID,Predicted_Ancestry)
 final_meta_all <- left_join(final_meta_data,meta_cqtl_ancetry_only,by="ID")
 final_meta_data_wasp <- combined_data %>% dplyr::select(all_of(selected_columns_wasp))
 
@@ -190,9 +191,9 @@ corrplot(
   pch.col = 'grey20',
   addCoef.col = "black",
   number.cex = 0.5,
-  col = COL2('RdBu', 10)
+  col = COL2('BrBG', 10)
 )
-title("Pearson Correlation - FNF")
+title("Pearson Correlation - FN-f")
 #mtext("FNF", side = 1, line = 4, cex = 1.2)
 dev.off()
 #------------------------------------------------------------------------------

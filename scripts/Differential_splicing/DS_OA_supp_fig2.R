@@ -38,8 +38,8 @@ OA_deltapsiCalc_df <- calculate_delta_psi(ratios_oa_qc, "CTL", "OA")
 introns_oa_pval_include <- join_introns_deltapsi_fdr(OA_deltapsiCalc_df,introns_oa,"./output/clu_oa/ctlvsoa_ds_cluster_significance.txt")
 #save(introns_oa_pval_include, file= "./output/clu_oa/introns_oa_joinAll")
 load("./output/clu_oa/introns_oa_joinAll")
-introns_oa_sig <- introns_oa_pval_include %>% dplyr::filter(p.adjust <= 0.05)
-introns_oa_subset_sig <- introns_oa_sig[abs(introns_oa_sig$deltapsi_batch) >= 0.15,]
+introns_oa_sig <- introns_oa_pval_include %>% dplyr::filter(p.adjust < 0.05)
+introns_oa_subset_sig <- introns_oa_sig[abs(introns_oa_sig$deltapsi_batch) > 0.15,]
 psi_oa_sig_15 <- ratios_oa_qc[which(rownames(ratios_oa_qc) %in% introns_oa_subset_sig$phe_id ),]
 
 
@@ -212,7 +212,7 @@ library(VennDiagram)
 library(ggvenn)
 load("./output/clu_fnf/introns_fnf_joinAll")
 
-introns_fnf_sig <- introns_fnf_pval_include %>% dplyr::filter(p.adjust <= 0.05) %>%
+introns_fnf_sig <- introns_fnf_pval_include %>% dplyr::filter(p.adjust < 0.05) %>%
   mutate(loc = str_split(phe_id, ":") %>%
            map_chr(~ paste(.x[1:3], collapse = ":")))
 introns_oa_sig <- introns_oa_sig %>%

@@ -197,6 +197,14 @@ calculate_case_fraction <- function(case_control_sizes) {
 
 
 
+# Function
+create_var_id <- function(chrom, pos, allele1, allele2) {
+  id1 <- paste0("chr", chrom, ":", pos, ":", allele1, ":", allele2)
+  id2 <- paste0("chr", chrom, ":", pos, ":", allele2, ":", allele1)
+  return(list(id1 = id1, id2 = id2))
+}
+
+
 # Function to process var_id
 process_var_id <- function(var_id) {
   # Remove "chr" prefix

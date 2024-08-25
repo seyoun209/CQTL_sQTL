@@ -6,7 +6,7 @@ ml qtltools/1.3.1
 ml samtools/1.20
 
 # Read snps into a file
-awk '{print $1}' /work/users/s/e/seyoun/CQTL_sQTL/output/01.qtltools_re/sigSNPs_all.list > temp_snps.txt
+awk '{print $1}' /work/users/s/e/seyoun/CQTL_sQTL/output/01.qtltools_re/sigSNPs_all_includeCond > temp_snps.txt
 
 while IFS= read -r i; do
     while [ $(squeue -u $USER -h | wc -l) -ge $max_jobs ]; do

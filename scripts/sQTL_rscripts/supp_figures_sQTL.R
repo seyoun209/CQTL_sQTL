@@ -1,7 +1,9 @@
 # Create sQTL relevent plots
 
-setwd("/work/users/s/e/seyoun/CQTL_sQTL/output")
+setwd("/work/users/s/e/seyoun/CQTL_sQTL")
 source("scripts/sQTL_rscripts/utils.R")
+
+library(rtracklayer)
 
 #-------------------------------------------------------------------------------
 # Venn diagram - 1 
@@ -9,34 +11,13 @@ source("scripts/sQTL_rscripts/utils.R")
 
 #This is sGene for the spling QTL including the condtional analysis
 
-saveRDS(final_pbs_sig_qtl_cond, file="./01.qtltools_re/pbs_cond_sig_beta_maf_added.rds")
-saveRDS(final_fnf_sig_qtl_cond, file="./01.qtltools_re/fnf_cond_sig_beta_maf_added.rds")
-pbs_sig_qtl_cond_annot <- readRDS("./01.qtltools_re/pbs_cond_sig_beta_maf_added.rds")
-fnf_sig_qtl_cond_annot <- readRDS("./01.qtltools_re/fnf_cond_sig_beta_maf_added.rds")
-
-# adding Symboles
-
-library(rtracklayer)
-gtf_path <- "/work/users/s/e/seyoun/Ref/genome/gencode.v45.annotation.gtf"
-gtf_data <- import(gtf_path)
-gene_info <- gtf_data[gtf_data$type == "gene"]
-
-genes_df <- data.frame(
-  gene_id = mcols(gtf_data)$gene_id,
-  gene_name = mcols(gtf_data)$gene_name,
-  stringsAsFactors = FALSE
-)
-
-genes_df_unique <- genes_df %>%
-  dplyr::rename(ensg = gene_id) %>%
-  dplyr::distinct(ensg, gene_name, .keep_all = TRUE)  
+# Since it is before subset, it can be count for regular
+response_pbs_results <- readRDS("output/01.qtltools_re/conditional_pbs/response_pbs_resInv.rds")
+response_fnf_results <- readRDS("output/01.qtltools_re/conditional_pbs/response_fnf_resInv.rds")
+#pbs_sig_qtl_cond_annot <- readRDS("./01.qtltools_re/pbs_cond_sig_beta_maf_added.rds")
+#fnf_sig_qtl_cond_annot <- readRDS("./01.qtltools_re/fnf_cond_sig_beta_maf_added.rds")
 
 
-sig_sGene_pbs_symbol <- pbs_sig_qtl_cond_annot %>%
-  left_join(genes_df_unique, by="ensg")
-
-sig_sGene_fnf_symbol <- fnf_sig_qtl_cond_annot %>%
-  left_join(genes_df_unique, by="ensg")
 
 
 pbs_sGene_sig <- sig_sGene_pbs_symbol %>%

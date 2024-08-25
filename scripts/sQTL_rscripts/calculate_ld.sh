@@ -25,7 +25,7 @@ ml samtools/1.20
 #mkdir -p /work/users/s/e/seyoun/CQTL_sQTL/output/geno/ld05
 #chr_nm="$(awk '{split($1,a,":"); print a[1]}' /work/users/s/e/seyoun/CQTL_sQTL/output/01.qtltools_re/sigSNPs_all.list)"
 
-snps="$(awk '{print $1}' /work/users/s/e/seyoun/CQTL_sQTL/output/01.qtltools_re/sigSNPs_all.list)"
+snps="$(awk '{print $1}' /work/users/s/e/seyoun/CQTL_sQTL/output/01.qtltools_re/sigSNPs_all_includeCond)"
 
 
 while IFS= read -r i || [[ -n "$i" ]]; do
