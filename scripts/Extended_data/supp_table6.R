@@ -181,7 +181,7 @@ combine_rbp_data <- function(pbs_data, fnf_data) {
   
   # Remove duplicates from the original combined data
   combined_data_unique <- combined_rbp_data %>%
-    anti_join(duplicates, by = c("Intron_junction_id", "ClusterID", "rsID", "variantID"))
+    anti_join(duplicates, by = c("Intron_junction_id", "ClusterID", "rsID", "variantID","sQTL_overlapping_RBPs"))
   
   # Combine the unique data with the combined duplicates
   final_data <- bind_rows(combined_data_unique, duplicates_combined) %>%
@@ -193,12 +193,76 @@ combine_rbp_data <- function(pbs_data, fnf_data) {
 
 combined_rbp_data <- combine_rbp_data(pbs_rbp_corr_all, fnf_rbp_corr_all)
 
+combined_rbp_data_dist <- combined_rbp_data %>%
+  mutate(
+    chromosome = str_extract(variantID, "chr\\d+|chrX|chrY"),
+    position = as.numeric(str_extract(variantID, "(?<=:)\\d+")),
+    intron_chr = str_extract(Intron_junction_id, "chr\\d+|chrX|chrY"),
+    intron_start = as.numeric(str_extract(Intron_junction_id, "(?<=:)\\d+")),
+    intron_end = as.numeric(str_split_fixed(Intron_junction_id, ":", 4)[,3]),
+    clu_id = str_extract(Intron_junction_id, "clu_\\d+"),
+    strand = str_extract(Intron_junction_id, "[+-]$"),
+    distance_from_start = ifelse(chromosome == intron_chr, 
+                                 abs(position - intron_start), NA),
+    distance_from_end = ifelse(chromosome == intron_chr, 
+                               abs(position - intron_end), NA),
+    dist_intron_junction_var = pmin(distance_from_start, distance_from_end, na.rm = TRUE)
+  ) %>%
+  dplyr::select(Gene, `Ensembl ID`, Intron_junction_id, ClusterID, dist_intron_junction_var, 
+         rsID, variantID, Significant_overlapping_RBPs)
+
+combined_rbp_data_onlySig <- combined_rbp_data_dist %>%
+  filter(Significant_overlapping_RBPs != "") 
+
+
+sig_enriched_ensg <- combined_rbp_data_onlySig %>%
+  distinct(`Ensembl ID`) %>%
+  filter(!is.na(`Ensembl ID`)) %>%
+  pull(`Ensembl ID`)
+
+write.table(sig_enriched_ensg, file = "output/Enrichment/sig_enriched_ensg.txt",sep='\t',quote=F,row.names=F,col.names=F)
+
+#system("scripts/enrichment/run_homer.sh /work/users/s/e/seyoun/CQTL_sQTL/output/Enrichment/sig_enriched_ensg.txt /work/users/s/e/seyoun/CQTL_sQTL/output/Enrichment/homer/homer_sig_enriched")
+
+
+
+##pathway Reacome + kegg
+# Read in from Homer
+reactome_data <- read_delim("output/Enrichment/homer/homer_sig_enriched/reactome.txt") |>
+  mutate(pval = exp(1)^logP) |>
+  dplyr::filter(pval < 0.01) |>
+  distinct(Term, .keep_all = TRUE) |>
+  mutate(`-log10pval` = -log10(pval)) |>
+  mutate(category = "Reactome Pathway")
+
+kegg_data <- read_delim("output/Enrichment/homer/homer_sig_enriched/kegg.txt") |>
+  mutate(pval = exp(1)^logP) |>
+  dplyr::filter(pval < 0.01) |>
+  distinct(Term, .keep_all = TRUE) |>
+  mutate(`-log10pval` = -log10(pval)) |>
+  mutate(category = "KEGG Pathway")
+
+combined_pathway <- bind_rows(reactome_data, kegg_data)
+
+## Format and write to table
+pathway_table <- combined_pathway |>
+  dplyr::select(-logP, -pval, -`Entrez Gene IDs`) |>
+  relocate(`-log10pval`, .after = Enrichment) |>
+  arrange(desc(`-log10pval`))
+write_csv(pathway_table, file = "output/Enrichment/table/pathway_table_sig.csv")
+
+
+
+
+
 
 # Create a new workbook
 wb <- createWorkbook()
 
 write_formatted_sheet(wb, "PBS_RBP_enrichment", prepare_data(pbs_rbp_eclip_subset))
 write_formatted_sheet(wb, "FN-f_RBP_enrichment", prepare_data(fnf_rbp_eclip_subset))
+write_formatted_sheet(wb, "sQTL_RBP_sig_correlation", combined_rbp_data_onlySig)
+write_formatted_sheet(wb, "Pathway (sQTL_RBP_sig)",pathway_table)
 
 # Save the workbook
 

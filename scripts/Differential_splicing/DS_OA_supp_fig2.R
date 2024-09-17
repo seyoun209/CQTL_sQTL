@@ -18,6 +18,7 @@ library(gridExtra)
 library(grid)
 library(rrvgo)
 library(stringr)
+library(colorspace)
 library(gprofiler2)
 source("scripts/utils/utils.R")
 
@@ -328,7 +329,7 @@ save(highConf_barPlot , file = "output/results_plots/Supplementary_figures/Supp_
 
 
 #venndiagram high confidence
-overlaps_genes_high_conf <- list("PBS vs. FN-f" = highconf_fnf$ensemblID, "PBS vs. OA" = highconf_oa$ensemblID)
+overlaps_genes_high_conf <- list("PBS vs. FN-f" = highconf_fnf$loc, "PBS vs. OA" = highconf_oa$loc)
 overlaps_highconf_Venn <-  ggvenn(overlaps_genes_high_conf, 
                                   fill_color = c("#FFDDA2","#BFDDFF"), 
                                   stroke_color = NA, 
