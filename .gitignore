@@ -13,3 +13,8 @@ tools/
 *.RData
 *external_data/*
 *.Rdata
+*_e.*
+*_o.*
+external_data/*
+*VennDiagram*
+*.txt
