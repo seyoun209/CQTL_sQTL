@@ -198,8 +198,8 @@ save(fnf_corrPlot, file = "results_plots/sqtl_plots/fnf_corrPlot.rda")
 
 # This is for the Supp figure 4d (rank plot)
 
-response_pbs_results <- readRDS("output/01.qtltools_re/conditional_pbs/response_pbs_resInv.rds")
-response_fnf_results <- readRDS("output/01.qtltools_re/conditional_pbs/response_fnf_resInv.rds")
+response_pbs_results <- readRDS("01.qtltools_re/conditional_pbs/response_pbs_resInv.rds")
+response_fnf_results <- readRDS("01.qtltools_re/conditional_pbs/response_fnf_resInv.rds")
 
 rank_counts <- function(counts, dataset_name) {
   df <- counts |> table() |> as_tibble()  |> dplyr::rename(rank="counts") |> dplyr::rename( counts ="n") %>%
@@ -305,6 +305,16 @@ resqtl_intron_tibble <- tibble(values = unique(c(pbs_resQTL$phe_id,fnf_resQTL$ph
   mutate(PBS = values %in% pbs_resQTL$phe_id,
          FNF = values %in% fnf_resQTL$phe_id)
 
+# sqtl cluster counts
+resqtl_cluster_pbs <-  pbs_resQTL  %>% dplyr::filter(!is.na(clusterID)) %>% distinct(clusterID)  %>% unlist() 
+resqtl_cluster_fnf <-  fnf_resQTL  %>% dplyr::filter(!is.na(clusterID)) %>% distinct(clusterID)  %>% unlist() 
+
+#sQTL cluste tibble
+
+resqtl_clusters <- tibble (values = unique(c(resqtl_cluster_pbs,resqtl_cluster_fnf ))) %>%
+  mutate(PBS = values %in% resqtl_cluster_pbs,
+         FNF = values %in% resqtl_cluster_fnf)
+
 #------------------------------------------------------------------------------
 #Re-make the sQtl venn diagram for the sIntrons 
 #Intron junctions -2
@@ -356,7 +366,6 @@ create_venn_diagram <- function(total_PBS, total_FNF, overlap, only_PBS, only_FN
       plot.margin = margin(t = 20, r = 20, b = 20, l = 20)
     )
 }
-
 
 
 #-------------------------------------------------------------------------------
@@ -472,21 +481,21 @@ max_count <- max(total_PBS, total_FNF)
 
 resQTL_venn <- create_venn_diagram(total_PBS, total_FNF, overlap, only_PBS, only_FNF, max_count)
 plotGG(plot =  resQTL_venn, x = 6.2, y =3.85 , height = 2, width = 2.25)
-plotText(label = "re-sGene", 
+plotText(label = "re-sGene",
          x = 7.35,
          y=3.9,
          fontsize = 8, fontfamily = "Helvetica",
          just="center",fontface = "bold",
          fontcolor = "black")
 
-plotText(label =  "PBS", 
+plotText(label =  "PBS",
          x = 7.1,
          y= 4.2,
          fontsize = 8, fontfamily = "Helvetica",
          just="right",
          fontcolor = "#2057A7")
 
-plotText(label =  "Fn-f", 
+plotText(label =  "Fn-f",
          x =7.5,
          y= 4.2,
          fontsize = 8, fontfamily = "Helvetica",
@@ -522,6 +531,39 @@ plotText(label =  "PBS",
 plotText(label =  "Fn-f", 
          x =7.5,
          y= 5.85,
+         fontsize = 8, fontfamily = "Helvetica",
+         just="left",
+         fontcolor = "#F2BC40")
+#-------------------------------------------------------------------------------
+# re-sQTL cluster counts
+
+total_PBS <- sum(resqtl_clusters$PBS)
+total_FNF <- sum(resqtl_clusters$FNF)
+overlap <- sum(resqtl_clusters$PBS & resqtl_clusters$FNF)
+only_PBS <- total_PBS - overlap
+only_FNF <- total_FNF - overlap
+max_count <- max(total_PBS, total_FNF)
+
+resQTL_cluster_venn <- create_venn_diagram(total_PBS, total_FNF, overlap, only_PBS, only_FNF, max_count)
+
+plotGG(plot =  resQTL_cluster_venn, x=8.2, y =3.85 , height = 2, width = 2.25)
+plotText(label = "re-sClusters", 
+         x = 9.5,
+         y=3.9,
+         fontsize = 8, fontfamily = "Helvetica",
+         just="center",fontface = "bold",
+         fontcolor = "black")
+
+plotText(label =  "PBS", 
+         x = 9.0,
+         y= 4.2,
+         fontsize = 8, fontfamily = "Helvetica",
+         just="right",
+         fontcolor = "#2057A7")
+
+plotText(label =  "Fn-f", 
+         x =9.75,
+         y= 4.2,
          fontsize = 8, fontfamily = "Helvetica",
          just="left",
          fontcolor = "#F2BC40")

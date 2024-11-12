@@ -18,6 +18,7 @@ library(plotgardener)
 library(grid)
 library(sva)
 library(gridtext)
+library(ggtext)
 source("scripts/utils/utils.R")
 
 pbs_oa <- load("output/clu_oa/PBSvsOA.Rdata")
@@ -210,7 +211,7 @@ OAGO_barplots <- ggplot(Siggo_plotting, aes(x = `-log10pval`, y = parentTerm, fi
   geom_bar(stat = "identity") +
   scale_x_continuous(limits = c(0, 8), expand = c(0, 0), name = "-log~10~pval",
                      breaks = seq(0, 8, 2)) +
-  scale_fill_manual(values = "#c1daf3") +
+  scale_fill_manual(values = "#C8F0BF") +
   facet_wrap(~category, ncol = 1, strip.position = "left", scales = "free_y") +
   geom_text(aes(x = 0, label = parentTerm), hjust = 0, family = "Helvetica",
             size = 2.5) +
@@ -273,7 +274,7 @@ OApathway_barplots <- ggplot(pathway_plotting, aes(x = `-log10pval`, y = Term)) 
   geom_vline(xintercept = 3, color = "grey75", alpha = 0.4) +
   geom_vline(xintercept = 4, color = "grey75", alpha = 0.4) +
   # geom_vline(xintercept = 5, color = "grey75", alpha = 0.4) +
-  geom_bar(stat = "identity", fill="#c1daf3") +
+  geom_bar(stat = "identity", fill="#C8F0BF") +
   scale_x_continuous(expand = c(0, 0), name = "-log~10~pval", limits = c(0, 4),
                      breaks = seq(0, 4, 1)) +
   #facet_wrap(~category, ncol = 1, strip.position = "left", scales = "free_y") +

@@ -6,6 +6,7 @@ setwd("/work/users/s/e/seyoun/CQTL_sQTL")
 library(magrittr)
 library(data.table)
 library(dplyr)
+library(colorspace)
 library(ComplexHeatmap)
 library(tidyverse)
 library(circlize)
@@ -252,7 +253,7 @@ oa_psi_subset_matches <- oa_psi_same_direction_filtered %>% dplyr::filter(loc %i
 
 
 overlaps_venn <- ggvenn(overlaps_intron_junctions_all, 
-       fill_color = c("#FFDDA2","#BFDDFF"), 
+       fill_color = c("#BFDDFF","#C8F0BF"), 
        stroke_color = NA, 
        auto_scale = TRUE, 
        show_percentage = FALSE, 
@@ -299,7 +300,7 @@ combined_chart$group <- factor(combined_chart$group, levels = c("PBS vs. OA","PB
 
 highConf_barPlot <- ggplot(combined_chart, aes(x = group, y = Freq, fill = group)) +
   geom_bar(stat = "identity", position = position_dodge())+
-  scale_fill_manual(values = c(lighten("#BFDDFF", 0.1),lighten("#FFDDA2",0.1))) +
+  scale_fill_manual(values = c(lighten("#9edb91", 0.1),lighten("#649fe3",0.1))) +
   scale_y_continuous( name = "Total number of High confidence intron junction",
                       limits = c(0, 200), breaks = seq(0, 200, 50)) +
   annotate(geom = "richtext", label = paste("n=",combined_chart$Freq[1]) ,
@@ -331,7 +332,7 @@ save(highConf_barPlot , file = "output/results_plots/Supplementary_figures/Supp_
 #venndiagram high confidence
 overlaps_genes_high_conf <- list("PBS vs. FN-f" = highconf_fnf$loc, "PBS vs. OA" = highconf_oa$loc)
 overlaps_highconf_Venn <-  ggvenn(overlaps_genes_high_conf, 
-                                  fill_color = c("#FFDDA2","#BFDDFF"), 
+                                  fill_color = c("#649fe3","#9edb91"), 
                                   stroke_color = NA, 
                                   auto_scale = TRUE, 
                                   show_percentage = FALSE, 

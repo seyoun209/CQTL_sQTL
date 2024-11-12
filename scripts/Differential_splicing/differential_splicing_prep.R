@@ -102,11 +102,15 @@ model_cov_fnf <-model.matrix(~Condition+as.factor(Donor)+
                                as.factor(RNAshippedDate)+as.factor(RNAextractionKitBatch)+
                              as.factor(FragmentBatch),
                              data=meta_ctl_fnf)
+#limma_psi_batchremove <- limma::removeBatchEffect(psi_fnf,
+#                                                  batch= as.factor(meta_ctl_fnf$RNAshippedDate),
+#                                                  batch1=as.factor(meta_ctl_fnf$RNAextractionKitBatch),
+#                                                  batch2=as.factor(meta_ctl_fnf$FragmentBatch),
+#                                                  batch3=as.factor(meta_ctl_fnf$Donor))
 limma_psi_batchremove <- limma::removeBatchEffect(psi_fnf,
-                                                  batch= as.factor(meta_ctl_fnf$RNAshippedDate),
+                                                  batch=as.factor(meta_ctl_fnf$FragmentBatch),
                                                   batch1=as.factor(meta_ctl_fnf$RNAextractionKitBatch),
-                                                  batch2=as.factor(meta_ctl_fnf$FragmentBatch),
-                                                  batch3=as.factor(meta_ctl_fnf$Donor))
+                                                  batch1=as.factor(meta_ctl_fnf$Donor))
 limma_psi_batchremove_junction <- cbind(rownames(limma_psi_batchremove), limma_psi_batchremove)
 colnames(limma_psi_batchremove_junction)[1] <- c('Junction')
 #write.table(limma_psi_batchremove_junction, file = "output/clu_fnf/psi_fnf_limma_batch_corrected",sep='\t',quote=F,row.names=F,col.names=T)
@@ -380,7 +384,7 @@ save(pathway_barplots, file = "output/results_plots/Figure1_differntial_splicing
 rownames(meta_ctl_fnf) <- meta_ctl_fnf$ID
 psi_fnf_limma_corr_num <- limma_psi_batchremove.df[,-203]
 
-psi_sig_deltapsi15 <- psi_fnf_limma_corr_num[rownames(psi_fnf_limma_corr_num) %in% sig_psi_maxCluste_psi15$phe_id,]
+psi_sig_deltapsi15 <- psi_fnf_limma_corr_num[rownames(limma_psi_batchremove.df) %in% sig_psi_maxCluste_psi15$phe_id,]
 
 
 cal_z_score <- function(x){
@@ -388,6 +392,8 @@ cal_z_score <- function(x){
 }
 
 data_subset_norm <- t(apply(psi_sig_deltapsi15, 1, cal_z_score))
+
+
 
 #z-score
 brks <- seq(min(data_subset_norm, na.rm = TRUE), max(data_subset_norm, na.rm = TRUE), length = 51)

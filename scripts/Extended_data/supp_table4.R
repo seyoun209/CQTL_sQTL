@@ -39,7 +39,7 @@ process_exon_table <- function(exon_table, chr_pos_data) {
     mutate(ExonID = gsub("SNRNP70:", "", GeneExon)) %>%
     select(ExonID, baseMean, log2FoldChange, lfcSE, stat, pvalue, padj) %>%
     left_join(chr_pos_data, by = c("ExonID" = "exonid")) %>%
-    select(ExonID, Chr, Start, End, baseMean, log2FoldChange, padj) %>%
+    select(ExonID, Chr, Start, End, baseMean, log2FoldChange,pvalue, padj) %>%
     arrange(Start)
 }
 
