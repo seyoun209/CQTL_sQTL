@@ -6,14 +6,14 @@ The associated paper is available on [BioRxiv: doi: 10.1101/2024.11.11.622754](h
 
 ##Workflow
 
-Clone workflow into working directory
+Clone workflow into the working directory
 
 ```bash
 git clone git@github.com:seyoun209/CQTL_sQTL.git .
 ```
 ### Differential alternative splicing
 
-1. Prepare tap-seperated 'samplesheet.txt' file with the names of Rea1 and Read2 gzipped fastq files, and the paths to theses files under the Seqeuncing_Directory column. An example is shown below:
+1. Prepare a tap-separated 'samplesheet.txt' file with the names of Rea1 and Read2 gzipped fastq files and the paths to these files under the Seqeuncing_Directory column. An example is shown below:
 
 	| Project   | Cell_Type | Genotype	| Bio_Rep	| Tech_Rep	| Seq_Rep	| Read1 | Read2 | Sequencing_Directory |
 	|---------|-----------|----------|---------|----------|---------|-------------------|-------------------|---------------------------| 
@@ -28,7 +28,7 @@ git clone git@github.com:seyoun209/CQTL_sQTL.git .
 
 ```bash
 sbatch run_RNAprocessing
-sbatch run_RNAprocessing
+sbatch run_diffsplicing
 ```
 
 ### sQTLs
@@ -50,6 +50,6 @@ sbatch scripts/sQTL_rscripts/response.sbatch
 Rscript scripts/coloc/coloc_calculate_all_condition_h4.R
 ```
 
-Colocalization were performed with [Boer et al. 2021](https://www.cell.com/cell/fulltext/S0092-8674(21)00941-7?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867421009417%3Fshowall%3Dtrue) GWAS, which includes data for 11 defined phenotypes encompassing major sites of OA.  
+Colocalization was performed with [Boer et al. 2021](https://www.cell.com/cell/fulltext/S0092-8674(21)00941-7?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867421009417%3Fshowall%3Dtrue) GWAS, which includes data for 11 defined phenotypes encompassing major sites of OA.  
 
  
