@@ -1,7 +1,8 @@
 # CQTL_sQTL
 
 This pipeline is used for processing and analyzing differential splicing, sQTLs, re-sQTLs, and colocalizations.
-The associated paper is available on BioRxiv: doi: 10.1101/2024.11.11.622754
+
+The associated paper is available on [BioRxiv: doi: 10.1101/2024.11.11.622754](https://www.biorxiv.org/content/10.1101/2024.11.11.622754v1)
 
 ##Workflow
 
