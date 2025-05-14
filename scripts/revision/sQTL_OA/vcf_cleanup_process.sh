@@ -1,5 +1,14 @@
 #!/bin/bash
 
+#sh vcf_cleanup_process.sh \
+#  /proj/phanstiel_lab/Data/processed/CQTL/geno/COA8_OA/vcf/CQTL_COA8_ALL_qc.vcf.gz \
+#  /work/users/s/e/seyoun/CQTL_sQTL/output/geno/oa_geno/oa_matched_afterQC.txt \
+#  /work/users/s/e/seyoun/CQTL_sQTL/output/geno/oa_geno/oa_rename_16.vcf.gz \
+#  /work/users/s/e/seyoun/CQTL_sQTL/output/geno/oa_geno/oa_rename_16_withChr.vcf.gz \
+#  /work/users/s/e/seyoun/CQTL_sQTL/output/geno/oa_geno \
+#  > /work/users/s/e/seyoun/CQTL_sQTL/output/logs/OA_rename.out \
+#  2> /work/users/s/e/seyoun/CQTL_sQTL/output/logs/OA_rename.err
+
 ml plink/1.90b3
 ml samtools/1.9
 ml vcftools/0.1.15
@@ -13,36 +22,36 @@ tabix -p vcf $4
 #make bed bim fam files
 mkdir -p $5/01.bed
 plink --vcf $4 \
-        --make-bed \
-        --double-id \
-        --out $5/01.bed/cqtl
+--make-bed \
+--double-id \
+--out $5/01.bed/cqtl
 
-# calculate allele frequency and filter minor allel 2 or  minHets: 5
+# calculate allele frequency and filter minor allel 10 and minHets: 5
 mkdir -p $5/02.freq_files
 
-plink --bfile $5/01.bed/cqtl\
-        --freqx \
-        --out $5/02.freq_files/freq
+plink --bfile $5/01.bed/cqtl \
+--freqx \
+--out $5/02.freq_files/freq
 
-awk 'NR==1 || ($6 >= 5 || $5 >= 2 )' $5/02.freq_files/freq.frqx > $5/02.freq_files/snp_list.txt;
+awk 'NR==1 || ($6 >= 2 && ($5 >= 2 || ($5 + $7) >= 3))' $5/02.freq_files/freq.frqx > $5/02.freq_files/snp_list.txt;
 sed -i '1d' $5/02.freq_files/snp_list.txt;
 
 
 # filter out snp list
 mkdir -p $5/03.recoded
 plink --bfile $5/01.bed/cqtl \
-        --extract $5/02.freq_files/snp_list.txt \
-        --make-bed \
-        --recode 12 \
-        --output-missing-genotype 0 \
-        --transpose \
-        --out $5/03.recoded/recoded
+--extract $5/02.freq_files/snp_list.txt \
+--make-bed \
+--recode 12 \
+--output-missing-genotype 0 \
+--transpose \
+--out $5/03.recoded/recoded
 
 # change back to vcf file
 mkdir -p $5/04.final
 plink --bfile $5/03.recoded/recoded \
-        --recode vcf \
-        --out $5/04.final/finalFiltered
+--recode vcf \
+--out $5/04.final/finalFiltered
 
 bgzip $5/04.final/finalFiltered.vcf
 

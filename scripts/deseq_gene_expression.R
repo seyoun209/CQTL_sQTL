@@ -103,7 +103,7 @@ colData(gse)[] <- lapply(colData(gse), factor)
 dds_gene <- DESeqDataSet(gse, design = ~ Condition+Donor)
 
 ## Filter out lowly expressed genes
-## (at least 10 counts in at least 2 samples)
+## (at least 10 counts in at least 21 samples)
 keep <- rowSums(counts(dds_gene) >= 10) >= ceiling(nrow(colData(gse))*0.10)
 dds_gene <- dds_gene[keep,]
 
@@ -216,8 +216,38 @@ ggplot(long_data, aes(x = GeneName, y = Expression, fill = GeneName)) +
 #Finding the differential gene expression
 res <- results(dds, name="condition_trt_vs_untrt")
 
+# adding the gene symboles to the raw counts for Brian
 
+library(AnnotationDbi)
+library(org.Hs.eg.db)
 
+selected_counts <- counts(dds_gene)[which(grepl("ENSG00000166426|ENSG00000187045|ENSG00000204610", 
+rownames(counts(dds_gene)))),]
 
+de_genes_df <- counts(dds_gene) |> as.data.frame()
+de_genes_df$ensgID <- gsub("\\..*$", "", rownames(de_genes_df))
 
+annots <- AnnotationDbi::select(org.Hs.eg.db,
+                                de_genes_df$ensgID,
+                                columns = c("SYMBOL"),
+                                keytype = "ENSEMBL")
+annots <- dplyr::rename(annots, gene_id = ENSEMBL)
+annots_unique <- annots %>% distinct(gene_id, .keep_all = TRUE)
+raw_counts_df <- left_join(de_genes_df, annots_unique, by = c("ensgID" = "gene_id"))
 
+gene_coords_mod <- as.data.frame(rowRanges(gse)) %>%
+  dplyr::select(gene_id, seqnames, start, end) %>%
+  dplyr::mutate(ensgID = gsub("\\..*$", "", gene_id)) %>%
+  dplyr::select(ensgID, seqnames, start, end)
+
+raw_counts_df <- inner_join(raw_counts_df, gene_coords_mod, by = "ensgID")
+
+cols_order <- c("ensgID", "SYMBOL", "seqnames", "start", "end",
+                setdiff(names(raw_counts_df), c("ensgID", "SYMBOL", "seqnames", "start", "end")))
+raw_counts_df <- raw_counts_df[, cols_order]
+raw_counts_df |> filter(SYMBOL %in% c("CRABP1 ","TMPRSS6","TRIM15"))
+write.csv(raw_counts_df, file = "output/quant/raw_counts_with_coords.csv", 
+          row.names = FALSE, quote = FALSE)
+
+write.csv(selected_counts, file = "output/quant/selected_genes_forBrian.csv", 
+          row.names = TRUE, quote = FALSE)

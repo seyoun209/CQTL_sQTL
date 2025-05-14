@@ -58,6 +58,9 @@ leafviz:
   memPerCpu: 8G
   ntask: 8
 
+run_qtltools_pbs_oa:
+  memPerCpu: 10G
+
 
 
 

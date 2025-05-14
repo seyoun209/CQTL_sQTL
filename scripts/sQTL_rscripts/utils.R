@@ -81,7 +81,7 @@ leafcutter_pheno_subset <- leafcutter_pheno_mutated %>%
 
 
 
-gtf_path <- "/work/users/s/e/seyoun/Ref/genome/gencode.v45.annotation.gtf"
+gtf_path <- "/users/s/e/seyoun/Ref/genome/gencode.v45.annotation.gtf"
 gtf_data <- import(gtf_path)
 gene_info <- gtf_data[gtf_data$type == "gene"]
 

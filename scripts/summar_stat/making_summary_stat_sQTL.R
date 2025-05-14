@@ -3,15 +3,70 @@
 setwd("/work/users/s/e/seyoun/CQTL_sQTL/")
 library(data.table)
 library(GenomicRanges)
+suppressMessages(library(qvalue))
+source("./scripts/sQTL_rscripts/utils.R")
 
 norm_header <-  read.table("scripts/sQTL_rscripts/nominal_header.txt") 
+#-------------------------------------------------------------------------------
+#conditional  formatting
 cond_header <- c("phe_id","phe_chr","phe_from",
                  "phe_to","phe_strd","n_var_in_cis","dist_phe_var","var_id",
                  "var_chr","var_from","var_to","rank",
                  "fwd_pval","fwd_r_squared","fwd_slope","fwd_best_hit","fwd_sig",
                  "bwd_pval","bwd_r_squared","bwd_slope","bwd_best_hit","bwd_sig")
+conditional <- fread(paste0("output/01.qtltools_re/conditional_pbs/",i,"_pbs_condtional.txt"))
+colnames(conditional) <- cond_header
+
+pbs_QTL_cond_final <- readRDS("output/01.qtltools_re/pbs_cond_sig_beta_maf_added.rds")
+fnf_QTL_cond_final <- readRDS("output/01.qtltools_re/fnf_cond_sig_beta_maf_added.rds")
+
+pbs_cond_values <- pbs_QTL_cond_final %>%
+  select(phe_id, var_id,rank) %>%
+  distinct()
+
+fnf_cond_values <- fnf_QTL_cond_final %>%
+  select(phe_id, var_id,rank) %>%
+  distinct()
+
+#-------------------------------------------------------------------------------
+#permuation formatting
 
 perm_header <- read.table("scripts/sQTL_rscripts/header.txt")
+
+perm <- fread(paste0("output/01.qtltools_re/perm_pbs/pc5/",i,".pbs.perm"))
+colnames(perm) <- paste(perm_header)
+perm_noNA <- perm |> filter(!is.na(var_id))
+
+sig_perm_header <- cbind(perm_header, "perm_feature_qval","pval_nominal_threshold")
+
+permQTL_fnf <- read.table("output/01.qtltools_re/01.significant/fnf_0.05_pc4.significant.txt") |> as.data.frame()
+permQTL_pbs <- read.table("output/01.qtltools_re/01.significant/pbs_0.05_pc5.significant.txt") |> as.data.frame()
+colnames(permQTL_pbs) <- sig_perm_header
+colnames(permQTL_fnf) <- sig_perm_header
+
+pbs_perm_values <- permQTL_pbs %>%
+  select(phe_id, adj_beta_pval,perm_feature_qval, pval_nominal_threshold) %>%
+  distinct()
+
+fnf_perm_values <- permQTL_fnf %>%
+  select(phe_id, adj_beta_pval, perm_feature_qval, pval_nominal_threshold) %>%
+  distinct()
+
+all_permQTL_fnf <- read.table("output/01.qtltools_re/01.significant/fnf_1_pc4.significant.txt") |> as.data.frame()
+all_permQTL_pbs <- read.table("output/01.qtltools_re/01.significant/pbs_1_pc5.significant.txt") |> as.data.frame()
+colnames(all_permQTL_fnf) <- sig_perm_header
+colnames(all_permQTL_pbs) <- sig_perm_header
+
+
+all_pbs_perm_values <- all_permQTL_pbs %>%
+  select(phe_id, adj_beta_pval,perm_feature_qval) %>%
+  distinct()
+
+all_fnf_perm_values <- all_permQTL_fnf %>%
+  select(phe_id, adj_beta_pval, perm_feature_qval) %>%
+  distinct()
+
+
 
 
 # Preparing for the MAF
@@ -64,33 +119,94 @@ annot_gr <- GRanges(all_annotations$chr,
 
 load("/work/users/s/e/seyoun/CQTL_sQTL/output/geno/freq/maf_id_add.rds")
 chr <- paste0("chr",seq(1:22))
+
+#-------------------------------------------------------------------------------
+#PBS summary stat
+# Create empty list to store data frames
+all_chr_data <- list()
+
+# Loop through chromosomes
 for (i in chr) {
   nominal <- fread(paste0("output/01.qtltools_re/nominal_pbs/pc5/",i,".pbs.cis"))
   colnames(nominal) <- paste(norm_header)
-  nom_gr <- GRanges(nominal$phe_chr, IRanges(nominal$phe_from, nominal$phe_to))
-  overlaps <- findOverlaps(nom_gr, annot_gr)
-  gene_mapping <- data.frame(
-    idx = queryHits(overlaps),
-    gene_id = annot_gr$gene_id[subjectHits(overlaps)]
+  
+  nominal_ensg <- annotate_genes(nominal, hg38_intron_sub_select_first, leafcutter_pheno_subset, txdb_genes)
+  
+  nominal_update <- nominal_ensg %>%
+    left_join(maf_id_add, by="var_id") %>%
+    left_join(all_pbs_perm_values, by="phe_id") %>%
+    left_join(pbs_cond_values, by = c("phe_id", "var_id"))
+  
+  nominal_final <- nominal_update %>% select(
+    Variant = var_id,
+    Effect_allele = `Effect allele`,
+    Other_allele = `Other allele`, 
+    Feature = ensg,
+    FeatureCoordinates = genomicLoc,
+    `p-value` = nom_pval,
+    beta = r_squared,
+    se = slope_se,
+    ID = phe_id,
+    perm_adj_beta_pval = adj_beta_pval,
+    perm_feature_qval = perm_feature_qval,
+    conditional_signal = rank,
+    EAF = MAF
   )
-  gene_mapping <- gene_mapping[!duplicated(gene_mapping$idx), ]
-  nominal$gene_id <- NA
-  nominal$gene_id[gene_mapping$idx] <- gene_mapping$gene_id
-  nominal$FeatureCoordinates <- paste0(nominal$phe_chr, ":", nominal$phe_from, "-", nominal$phe_to)
   
-  nominal_update <- nominal %>% left_join(maf_id_add, by="var_id") %>%
-    left_join(conditional,by=c("phe_id" = "phe_id", "var_id" = "var_id"))
-  perm <- fread(paste0("output/01.qtltools_re/perm_pbs/pc5/",i,".pbs.perm"))
-  colnames(perm) <- paste(perm_header)
-  conditional <- fread(paste0("output/01.qtltools_re/conditional_pbs/",i,"_pbs_condtional.txt"))
-  colnames(conditional) <- cond_header
-  
+  # Add to list
+  all_chr_data[[i]] <- nominal_final
 }
 
+# Combine all chromosomes
+pbs_combined_data <- do.call(rbind, all_chr_data)
+
+# Save combined data
+fwrite(pbs_combined_data, "/work/users/s/e/seyoun/dbGap/sQTL/MSK/CHON_sQTL_PBS_summarystats.csv")
+
+    
+#-------------------------------------------------------------------------------
+#FNF
+    
+# Create empty list to store data frames
+all_chr_data_fnf <- list()
+
+# Loop through chromosomes
+for (i in chr) {
+  nominal <- fread(paste0("output/01.qtltools_re/nominal_fnf/pc4/",i,".fnf.cis"))
+  colnames(nominal) <- paste(norm_header)
+  
+  nominal_ensg <- annotate_genes(nominal, hg38_intron_sub_select_first, leafcutter_pheno_subset, txdb_genes)
+  
+  nominal_update <- nominal_ensg %>%
+    left_join(maf_id_add, by="var_id") %>%
+    left_join(all_fnf_perm_values, by="phe_id") %>%
+    left_join(fnf_cond_values, by = c("phe_id", "var_id"))
+  
+  nominal_final <- nominal_update %>% select(
+    Variant = var_id,
+    Effect_allele = `Effect allele`,
+    Other_allele = `Other allele`, 
+    Feature = ensg,
+    FeatureCoordinates = genomicLoc,
+    `p-value` = nom_pval,
+    beta = r_squared,
+    se = slope_se,
+    ID = phe_id,
+    perm_adj_beta_pval = adj_beta_pval,
+    perm_feature_qval = perm_feature_qval,
+    conditional_signal = rank,
+    EAF = MAF
+  )
+  
+  # Add to list
+  all_chr_data_fnf[[i]] <- nominal_final
+}
+
+# Combine all chromosomes
+fnf_combined_data <- do.call(rbind, all_chr_data_fnf)
+
+# Save combined data
+fwrite(fnf_combined_data, "/work/users/s/e/seyoun/dbGap/sQTL/MSK/CHON_sQTL_FNF_summarystats.csv")
 
 
-# Add gene column to nominal data
-nominal$gene_id <- NA
-nominal$gene_id[gene_mapping$idx] <- gene_mapping$gene_id
-pbs_chr22 <- fread("/work/users/s/e/seyoun/dbGap/nicole/chr22_filtered.txt")
-"output/01.qtltools_re/nominal_pbs/pc5/chr1.pbs.cis"
+

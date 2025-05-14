@@ -28,14 +28,14 @@ vcf_sample_exluce_afterQC: "0_1_chQTL_AM7352_D_2,0_4_chQTL_AM7244_D,0_6_chQTL_AM
 
 ## Genome-specific reference parameters
 #salmon: '/work/users/s/e/seyoun/Ref/genome/salmon_idx'
-gtf: '/work/users/s/e/seyoun/Ref/genome/gencode.v45.annotation.gtf'
-star: '/work/users/s/e/seyoun/Ref/genome/STAR_idx'
-starsjdb: '/work/users/s/e/seyoun/Ref/genome/STAR_idx/sjdbList.fromGTF.out.tab'
-fa: '/work/users/s/e/seyoun/Ref/genome/gencode.v45.transcripts.fa'
-genome_dir: '/work/users/s/e/seyoun/Ref/genome'
+gtf: '/users/s/e/seyoun/Ref/genome/gencode.v45.annotation.gtf'
+star: '/users/s/e/seyoun/Ref/genome/STAR_idx'
+starsjdb: '/users/s/e/seyoun/Ref/genome/STAR_idx/sjdbList.fromGTF.out.tab'
+fa: '/users/s/e/seyoun/Ref/genome/gencode.v45.transcripts.fa'
+genome_dir: '/users/s/e/seyoun/Ref/genome'
 
 ##salmon options
-salmon: '/work/users/s/e/seyoun/Ref/genome/salmon_idx'
+salmon: '/users/s/e/seyoun/Ref/genome/salmon_idx'
 gcBias: 'TRUE'
 seqBias: 'TRUE'
 
