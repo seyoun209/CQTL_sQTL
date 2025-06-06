@@ -269,14 +269,82 @@ gtex_sqtl_count_Barplot <- ggplot(all_summary, aes(x = factor(tissue_count), y =
 save(gtex_sqtl_count_Barplot,
 file = "output/revision/plots/gtex_sqtl_count_Barplot.rda")
 
+
+#---------------------------------------------------------
+# Make the barplot with the bin (0, 1-5, 5-15, 15-50)
+
+all_summary_binned <- all_summary %>%
+  mutate(tissue_bin = case_when(
+    tissue_count == 0 ~ "No overlaps",
+    tissue_count >= 1 & tissue_count <= 5 ~ "Overlaps of 1-5 tissues",
+    tissue_count >= 6 & tissue_count <= 15 ~ "Overlaps of 5-15 tissues",
+    tissue_count >= 16 ~ "Overlaps of 15-50 tissues"  # adjust as needed
+  )) %>%
+  mutate(tissue_bin = factor(tissue_bin, levels = c("No overlaps", "Overlaps of 1-5 tissues", "Overlaps of 5-15 tissues", "Overlaps of 15-50 tissues")))
+
+# Aggregate by tissue_bin and Group:
+bin_summary <- all_summary_binned %>%
+  group_by(Group, tissue_bin) %>%
+  summarise(freq = sum(freq), .groups = "drop")
+
+
+Gtex_binsize_barplot <- ggplot(bin_summary, aes(x = factor(tissue_bin), y = freq, fill = Group)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9), width = 0.8) +
+  scale_fill_manual(values = c("PBS" = "#BFDDFF", "FN-f" = "#FFDDA2")) +
+  scale_y_continuous(
+    name = "Counts of sQTL",
+    labels = scales::comma,
+    expand = expansion(mult = c(0, 0.1))
+  ) +
+  geom_text(aes(label = freq),
+            position = position_dodge(width = 0.9),
+            vjust = -0.5,
+            size = 2) +
+  #scale_y_continuous(
+  #  name = "Counts of sQTLs",
+  #  trans = pseudo_log_trans(base = 2),
+  #  breaks = c(0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096),
+  #  labels = comma,
+  #  expand = expansion(mult = c(0, 0.1))
+  #) +
+  scale_x_discrete(
+    name = "GTEx tissue count",
+    drop = FALSE
+  ) +
+  coord_cartesian(clip = "off") +
+  labs(title = "Distribution of GTEx Tissue Count by Dataset") +
+  theme_minimal() +
+  theme(
+    axis.line = element_line(linewidth = 0.25),
+    axis.ticks.x = element_blank(),
+    axis.ticks.y = element_line(color = "black", linewidth = 0.25),
+    axis.ticks.length.y = unit(-0.1, "cm"),
+    axis.title.x = element_markdown(size = 8, family = "Helvetica", margin = margin(t = 5)),
+    axis.title.y = element_markdown(size = 8, family = "Helvetica", margin = margin(r = 5)),
+    text = element_text(family = "Helvetica"),
+    axis.text.y = element_text(color = "black", size = 6),
+    axis.text.x = element_text(color = "black", size = 6, margin = margin(t = 5)),
+    panel.background = element_rect(fill = "transparent", color = "transparent"),
+    plot.background = element_rect(fill = "transparent", color = "transparent"),
+    panel.grid = element_blank(),
+    legend.title = element_blank(),
+    legend.position = c(0.9, 0.9),
+    legend.key.size = unit(0.2, "cm"),
+    legend.text = element_text(size = 6),
+    panel.spacing.y = unit(0.5, "cm"),
+    title = element_blank()
+  )
+
+save(Gtex_binsize_barplot,
+     file = "output/revision/plots/gtex_sqtl_binsize_Barplot.rda")
 # Barplot in plotgardener
 
 # plot gardener to keep both plot at the same time------------------------------
-pdf(file = "output/revision/plots/gtex_sqtl_count_Barplot.pdf",   # The directory you want to save the file in
-    width = 8, # The width of the plot in inches
-    height = 4)
+pdf(file = "output/revision/plots/gtex_sqtl_count_bin_Barplot.pdf",   # The directory you want to save the file in
+    width = 5, # The width of the plot in inches
+    height = 3.5)
 
-pageCreate(width = 8, height =4 , default.units = "inches", showGuides = FALSE)
-load("output/revision/plots/gtex_sqtl_count_Barplot.rda")
-plotGG(gtex_sqtl_count_Barplot, x = 0.4, y = 0.5, width = 7.5, height = 3)
+pageCreate(width = 5, height =3.5 , default.units = "inches", showGuides = FALSE)
+load("output/revision/plots/gtex_sqtl_binsize_Barplot.rda")
+plotGG(Gtex_binsize_barplot, x = 0.4, y = 0.5, width = 4.5, height = 3)
 dev.off()

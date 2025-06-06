@@ -209,7 +209,7 @@ combined_rbp_data_dist <- combined_rbp_data %>%
     dist_intron_junction_var = pmin(distance_from_start, distance_from_end, na.rm = TRUE)
   ) %>%
   dplyr::select(Gene, `Ensembl ID`, Intron_junction_id, ClusterID, dist_intron_junction_var, 
-         rsID, variantID, Significant_overlapping_RBPs)
+         rsID, variantID, Significant_overlapping_RBPs, Source)
 
 combined_rbp_data_onlySig <- combined_rbp_data_dist %>%
   filter(Significant_overlapping_RBPs != "") 

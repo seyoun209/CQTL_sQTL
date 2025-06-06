@@ -1,6 +1,15 @@
 setwd("/work/users/s/e/seyoun/CQTL_sQTL/")
+source("./scripts/sQTL_rscripts/utils.R")
 library(plotgardener)
+library(dplyr)
+library(data.table)
 library(RColorBrewer)
+library(ggplot2)
+library(scales)
+library(ggrepel)
+library(stringr)
+library(httpgd)
+
 #encode bigwig name needs to be change or find the right region of it. 
 
 yl_gn_bu <- brewer.pal(n = 9, name = "YlGnBu")
@@ -386,7 +395,7 @@ pdf(file = "output/results_plots/rbp/main_figure4.pdf",   # The directory you wa
     width = 9.5, # The width of the plot in inches
     height = 6)
 
-pageCreate(width = 9.5, height =6 , default.units = "inches", showGuides = FALSE)
+pageCreate(width = 9.5, height =6 , default.units = "inches", showGuides = TRUE)
 
 
 # scatter plots of PBS and FNF--------------------------------------------------
@@ -437,6 +446,20 @@ RNA_signals <- plotSignal(encode_rbp_AATF,
                                fill= yl_gn_bu[9],
                                default.units = "inches")
 
+# Extract the y-range
+y_range <- RNA_signals$range
+# Format as a label with 2-digit precision
+rna_scale_label <- sprintf("[%.1f - %.1f]", y_range[1], y_range[2])
+
+plotText(label = rna_scale_label,
+         x = 4.0, 
+         y = 3.7 + 0.25 + 0.05,  # place it slightly above the signal track
+         just = c("left", "bottom"),
+         fontsize = 6,
+         rot = 90,            # rotate the text 90 degrees
+         default.units = "inches")
+
+
 annoGenomeLabel(plot = RNA_signals, params = region_pg, fontsize = 6, 
                 y = 4.0)
 
@@ -483,7 +506,7 @@ plotgenes <- plotGenes(params = region_pg,
                                                    "color" = "#37a7db"),fontsize = 6,geneOrder="PCYT1A",
                        strandLabels = FALSE,geneBackground = "transparent")
 
-eftud2_pcy1a <- readBigwig(encode_rbp_eftud2[1],
+eftud2_pcy1a <- readBigwig(encode_rbp_eftud2[2],
   chrom = "chr3",
   chromstart =196287495-5000,
   chromend = 196287495+5000 
@@ -496,6 +519,19 @@ RNA_signals <- plotSignal(eftud2_pcy1a,
                           fill= yl_gn_bu[9],
                           default.units = "inches")
 
+
+# Extract the y-range
+y_range <- RNA_signals$range
+# Format as a label with 2-digit precision
+rna_scale_label <- sprintf("[%.1f - %.1f]", y_range[1], y_range[2])
+
+plotText(label = rna_scale_label,
+         x = 7.0, 
+         y = 3.7 + 0.25 + 0.05,  # place it slightly above the signal track
+         just = c("left", "bottom"),
+         fontsize = 6,
+         rot = 90,            # rotate the text 90 degrees
+         default.units = "inches")
 
 
 
@@ -530,3 +566,21 @@ plotText(pcyt1a_results$phe_id[2], x= 8.1,y=4.3, fontfamily = "Helvetica", just 
 
 
 dev.off()
+
+
+#Find the y-axis AATF AND eftud2
+
+region_pg <- pgParams(assembly = "hg38",chrom = "chr17",
+                      chromstart = 16439519-5000,
+                      chromend = 16439519+5000,
+                      x = 4.0, width = 2.2)
+
+encode_aatf <- readBigwig(encode_rbp_AATF, params = region_pg)
+
+
+region_pg <- pgParams(assembly = "hg38",chrom = "chr3",
+                      chromstart =196287495-5000,
+                      chromend = 196287495+5000 ,
+                      x = 7.0, width = 2.2)
+
+encode_eftud2 <- readBigwig(encode_rbp_eftud2[2])

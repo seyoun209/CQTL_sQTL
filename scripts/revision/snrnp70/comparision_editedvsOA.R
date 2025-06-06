@@ -7,7 +7,11 @@ library(tidyr)
 library(ggplot2)
 library(ggtext)
 library(colorspace)
+library(httpgd)
+library(plotgardener)
 
+
+load("output/rmats_edited/sig_kd_wd.RData") #kd_wd, sig_kd, kd_filt, rmats_kd_genes
 #-------------------------------------------------------------------------------
 #OA
 # Comparison wd vs hetKD
@@ -29,6 +33,7 @@ rmats_oa_genes <- c(summary(sig_oa,'SE')[,"geneSymbol"],
 save(oa_pbs, sig_oa,oa_filt, rmats_oa_genes,
      file = "output/rmats_oa_101/sig_oa_pbs.RData")
 
+load("output/rmats_oa_101/sig_oa_pbs.RData")
 #-------------------------------------------------------------------------------
 #fnf
 fnf_path <- "output/rmats_fnf_101_no_paired/"
@@ -43,8 +48,7 @@ rmats_fnf_genes <- c(summary(sig_fnf,'SE')[,"geneSymbol"],
                     summary(sig_fnf,'A3SS')[,"geneSymbol"],
                     summary(sig_fnf,'A5SS')[,"geneSymbol"],
                     summary(sig_fnf,'MXE')[,"geneSymbol"]) |> unique()
-save(fnf_pbs, sig_fnf, fnf_filt,rmats_fnf_genes,
-     file = "output/rmats_fnf_101_no_paired/sig_fnf_pbs.RData")
+
 
 #-------------------------------------------------------------------------------
 #Making the psi boxplot between OA and edited
@@ -112,6 +116,10 @@ kd_comparedtoOA_plot_data <- compare_and_plot(sig_kd, oa_filt)
 #oa_comparedtoFNF_plot_data <- plot_data
 #fnf_comparedtoKD_plot_data <- plot_data
 #OA_comparedtoKD_plot_data <- plot_data
+
+save(fnf_pbs, sig_fnf, fnf_filt,rmats_fnf_genes,
+     file = "output/rmats_fnf_101_no_paired/sig_fnf_pbs.RData")
+load("output/rmats_fnf_101_no_paired/sig_fnf_pbs.RData")
 
 # To calculate the Wilcox test for the p-value
 

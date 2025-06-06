@@ -246,7 +246,7 @@ response_fnf_results <- readRDS("/work/users/s/e/seyoun/CQTL_sQTL/output/01.qtlt
   #----------------------------------------------------------------
   #Make summary only for the two groups
 
-    pbs_sQTL_eqtl_summary <- pbs_sqtl_eqtlLD_07 %>%
+  pbs_sQTL_eqtl_summary <- pbs_sqtl_eqtlLD_07 %>%
     mutate(
       overlap_category = case_when(
       !is.na(eqtl_match_count) & same_gene == "Yes" ~ "Variant_Overlap_with_Gene",
@@ -315,6 +315,9 @@ response_fnf_results <- readRDS("/work/users/s/e/seyoun/CQTL_sQTL/output/01.qtlt
 
 save(eqtl_sqtl_overlaps_Barplot, 
 file = "/work/users/s/e/seyoun/CQTL_sQTL/output/revision/plots/eqtl_sqtl_overlaps_Barplot.rda")
+
+load("/work/users/s/e/seyoun/CQTL_sQTL/output/revision/plots/eqtl_sqtl_overlaps_Barplot.rda")
+
   #----------------------------------------------------------------
   #This is for the exact match of the lead variant
   #----------------------------------------------------------------
@@ -487,6 +490,8 @@ file = "/work/users/s/e/seyoun/CQTL_sQTL/output/revision/plots/eqtl_sqtl_overlap
   #chr6:31437351:T:A
   #chr6:31392564:T:C
 
+  pbs_ensg_het <- pbs_allelic_heterogeneity_results |> filter(heterogeneity_type == "Same junction heterogeneity")
+
   #---------------------------------------------------------------
   # Conditional analysis 
   #---------------------------------------------------------------
@@ -519,6 +524,8 @@ fnf_variant_ids <- unique(unlist(lapply(ld_details_fnf, function(x) {
   write.table(eqtl_sqtl_variants_overlapsIds, 
   file = "/work/users/s/e/seyoun/CQTL_sQTL/output/revision/data/e_sqtl_variant_ids.txt", 
               quote = FALSE, row.names = FALSE, col.names = FALSE)
+
+  #eqtl_sqtl_variants_overlapsIds <- fread("/work/users/s/e/seyoun/CQTL_sQTL/output/revision/data/e_sqtl_variant_ids.txt")
 
   #---------------------------------------------------------------
   #Load the geno file
@@ -761,7 +768,7 @@ Conditional_fnf_re <- analyze_conditional_qtl(qtl_results=fnf_eqtl_sqtl_overlaps
 save(Conditional_pbs_re, Conditional_fnf_re,
      file = "/work/users/s/e/seyoun/CQTL_sQTL/output/revision/data/conditional_analysis.RData")
 
-
+load("/work/users/s/e/seyoun/CQTL_sQTL/output/revision/data/conditional_analysis.RData")
 #----------------------------------------------------------------
 #FDR Correction for the conditional analysis
 #----------------------------------------------------------------
@@ -769,8 +776,247 @@ save(Conditional_pbs_re, Conditional_fnf_re,
 Conditional_pbs_re$anova_cond_fdr <- p.adjust(Conditional_pbs_re$anova_conditional_pval, method = "fdr")
 Conditional_fnf_re$anova_cond_fdr <- p.adjust(Conditional_fnf_re$anova_conditional_pval, method = "fdr")
 
-Conditional_pbs_re |> filter(anova_cond_fdr < 0.05) 
-Conditional_fnf_re |> filter(anova_cond_fdr < 0.05) 
+condition_pbs_sig_re <- Conditional_pbs_re |> filter(anova_cond_fdr < 0.05) 
+condition_fnf_sig_re <- Conditional_fnf_re |> filter(anova_cond_fdr < 0.05)
+
+pbs_merged <- pbs_sqtl_eqtlLD_07 %>%
+  mutate(key = paste(phe_id, var_id, sep = "_")) %>%
+  # Merge conditionally significant records (keep key only)
+  left_join(
+    condition_pbs_sig_re %>% 
+      mutate(key = paste(phe_id, var_id, sep = "_")) %>% 
+      dplyr::select(key) %>% 
+      mutate(cond_sig = TRUE),
+    by = "key"
+  ) %>%
+  mutate(new_overlap_category = case_when(
+    # If there is an eQTL match (non-NA eqtl_match_count and same_gene == "Yes")
+    # and the record is conditionally significant then add "CondSig"
+    !is.na(eqtl_match_count) & eqtl_match_count > 0 & same_gene == "Yes" & !is.na(cond_sig) ~ "Variant_Overlap_with_Gene_CondSig",
+    # Otherwise if there is an eQTL match
+    !is.na(eqtl_match_count) & eqtl_match_count > 0 & same_gene == "Yes" ~ "Variant_Overlap_with_Gene",
+    TRUE ~ "No_Overlap"
+  ))
+
+# For FN-f: do the same
+fnf_merged <- fnf_sqtl_eqtlLD_07 %>%
+  mutate(key = paste(phe_id, var_id, sep = "_")) %>%
+  left_join(
+    condition_fnf_sig_re %>% 
+      mutate(key = paste(phe_id, var_id, sep = "_")) %>% 
+      dplyr::select(key) %>% 
+      mutate(cond_sig = TRUE),
+    by = "key"
+  ) %>%
+  mutate(new_overlap_category = case_when(
+    !is.na(eqtl_match_count) & eqtl_match_count > 0 & same_gene == "Yes" & !is.na(cond_sig) ~ "Variant_Overlap_with_Gene_CondSig",
+    !is.na(eqtl_match_count) & eqtl_match_count > 0 & same_gene == "Yes" ~ "Variant_Overlap_with_Gene",
+    TRUE ~ "No_Overlap"
+  ))
+
+
+# Summarize for PBS and FN-f separately
+pbs_summary <- pbs_merged %>%
+  group_by(new_overlap_category) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  mutate(group = "PBS")
+
+fnf_summary <- fnf_merged %>%
+  group_by(new_overlap_category) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  mutate(group = "FN-f")
+
+
+combined_summary <- bind_rows(pbs_summary, fnf_summary) %>%
+  mutate(group = factor(group, levels = c("PBS", "FNF")))
+
+stacked_summary <- combined_summary %>%
+  mutate(
+    fill_category = case_when(
+      group == "PBS" & new_overlap_category == "Variant_Overlap_with_Gene_CondSig" ~ "PBS_CondSig",
+      group == "PBS" & new_overlap_category == "Variant_Overlap_with_Gene" ~ "PBS_NonCondSig",
+      group == "FNF" & new_overlap_category == "Variant_Overlap_with_Gene_CondSig" ~ "FNF_CondSig",
+      group == "FNF" & new_overlap_category == "Variant_Overlap_with_Gene" ~ "FNF_NonCondSig",
+      new_overlap_category == "No_Overlap" ~ "No_Overlap"
+    )
+  )
+
+# Desired order: No_Overlap (bottom), NonCondSig (middle), CondSig (top)
+stacked_summary$fill_category <- factor(
+  stacked_summary$fill_category,
+  levels = c("No_Overlap", "PBS_NonCondSig", "PBS_CondSig", "FNF_NonCondSig", "FNF_CondSig")
+)
+
+eqtl_sqtl_overlapscond_Barplot <- ggplot(stacked_summary, aes(x = "", y = count, fill = fill_category)) +
+  geom_col(position = position_stack(reverse = TRUE), width = 0.8) +  # Reverse stacking order
+  geom_text(aes(label = count),
+            position = position_stack(vjust = 0.5, reverse = TRUE),  # Align text with reversed stack
+            size = 2) +
+  facet_wrap(~ group, labeller = as_labeller(c(
+  "PBS" = "<span style='color:#1F78B4;'>PBS</span>",
+  "FNF" = "<span style='color:#CD9B00;'>FN-f</span>"))) +
+  scale_fill_manual(
+    values = c(
+      "PBS_NonCondSig" = "#BFDDFF",    # Light blue for PBS NonCondSig
+      "PBS_CondSig" = "#1F78B4",       # Dark blue for PBS CondSig
+      "FNF_NonCondSig" = "#FFDDA2",    # Light yellow for FNF NonCondSig
+      "FNF_CondSig" = "#CD9B00",       # Dark yellow for FNF CondSig
+      "No_Overlap" = "grey90"         # Grey for No_Overlap
+    ),
+    labels = c(
+      "PBS_NonCondSig" = "Variant_Overlap_with_Gene (PBS)",
+      "PBS_CondSig" = "Variant_Overlap_with_Gene_CondSig (PBS)",
+      "FNF_NonCondSig" = "Variant_Overlap_with_Gene (FNF)",
+      "FNF_CondSig" = "Variant_Overlap_with_Gene_CondSig (FNF)",
+      "No_Overlap" = "No_Overlap"
+    )
+  ) +
+  scale_y_continuous(
+    name = "Counts of sQTL",
+    labels = scales::comma,
+    expand = expansion(mult = c(0, 0.1))
+  ) +
+  scale_x_discrete(name = "") +
+  coord_cartesian(clip = "off") +
+  theme(
+    strip.placement = "outside",
+    axis.line = element_line(linewidth = 0.25),
+    axis.ticks.x = element_blank(),
+    axis.ticks.y = element_line(color = "black", linewidth = 0.25),
+    axis.ticks.length.y = unit(-0.1, "cm"),
+    axis.title.x = element_markdown(size = 8, family = "Helvetica", margin = margin(t = 5)),
+    axis.title.y = element_markdown(size = 8, family = "Helvetica", margin = margin(r = 5)),
+    text = element_text(family = "Helvetica"),
+    axis.text.y = element_text(color = "black", size = 6),
+    axis.text.x = element_blank(),
+    strip.background = element_blank(),
+    strip.text = element_markdown(size = 8, margin = margin(b = 5)),
+    panel.background = element_rect(fill = "transparent", color = "transparent"),
+    plot.background = element_rect(fill = "transparent", color = "transparent"),
+    panel.grid = element_blank(),
+    legend.title = element_blank(),
+    lgenend.background = element_rect(fill = "transparent", color = "transparent"),
+    legend.position = c(0.9, 0.9),
+    panel.spacing.y = unit(0.5, "cm")
+  )
+
+save(eqtl_sqtl_overlapscond_Barplot, file="revision/plots/eqtl_sqtl_overlapscond_Barplot.rda")
 
 
 #----------------------------------------------------------------
+
+# --- Modify the gene selection: include all genes for PBS and FN-f -----------------
+genes_pbs <- response_pbs_results %>% 
+  group_by(ensg) %>% 
+  ungroup()
+genes_fnf <- response_fnf_results %>% 
+  group_by(ensg) %>% 
+  ungroup()
+
+# --- Summarize heterogeneity for PBS -----------------
+pbs_allelic_heterogeneity_results <- genes_pbs %>%
+  group_by(ensg) %>%
+  summarize(
+    num_variants = n_distinct(var_id),
+    num_junctions = n_distinct(phe_id),
+    ld_info_out = list(compute_ld_info(unique(var_id), 
+                          ld_dir = "/work/users/s/e/seyoun/CQTL_sQTL/output/geno/ld")),
+    min_ld = ld_info_out[[1]]$min_ld,
+    ld_details = ld_info_out[[1]]$ld_details,
+    heterogeneity_type = case_when(
+      num_variants == 1 | (num_variants > 1 & !is.na(min_ld) & min_ld >= 0.7) ~ "No heterogeneity",
+      num_variants > 1 & num_junctions == 1 ~ "Same junction heterogeneity",
+      num_variants > 1 & num_junctions > 1 & (!is.na(min_ld) & min_ld < 0.7) ~ "Multiple junction heterogeneity",
+      TRUE ~ "Unclassified"
+    ),
+    .groups = "drop"
+  ) %>%
+  # Combine the No heterogeneity cases (both single variant AND the ones with >1 variant that meet criteria)
+  mutate(final_het = case_when(
+    heterogeneity_type == "No heterogeneity" ~ "No heterogeneity",
+    heterogeneity_type %in% c("Same junction heterogeneity", "Multiple junction heterogeneity") ~ "Heterogeneity",
+    TRUE ~ "Unclassified"   # if you want to drop or combine these, adjust accordingly.
+  ))
+
+# --- Do the same for FN-f -----------------
+fnf_allelic_heterogeneity_results <- genes_fnf %>%
+  group_by(ensg) %>%
+  summarize(
+    num_variants = n_distinct(var_id),
+    num_junctions = n_distinct(phe_id),
+    ld_info_out = list(compute_ld_info(unique(var_id), 
+                          ld_dir = "/work/users/s/e/seyoun/CQTL_sQTL/output/geno/ld")),
+    min_ld = ld_info_out[[1]]$min_ld,
+    ld_details = ld_info_out[[1]]$ld_details,
+    heterogeneity_type = case_when(
+      num_variants == 1 | (num_variants > 1 & !is.na(min_ld) & min_ld >= 0.7) ~ "No heterogeneity",
+      num_variants > 1 & num_junctions == 1 ~ "Same junction heterogeneity",
+      num_variants > 1 & num_junctions > 1 & (!is.na(min_ld) & min_ld < 0.7) ~ "Multiple junction heterogeneity",
+      TRUE ~ "Unclassified"
+    ),
+    .groups = "drop"
+  ) %>%
+  mutate(final_het = case_when(
+    heterogeneity_type == "No heterogeneity" ~ "No heterogeneity",
+    heterogeneity_type %in% c("Same junction heterogeneity", "Multiple junction heterogeneity") ~ "Heterogeneity",
+    TRUE ~ "Unclassified"
+  ))
+
+# (Optional) If you want to drop the Unclassified cases:
+pbs_final <- pbs_allelic_heterogeneity_results %>% filter(final_het %in% c("No heterogeneity", "Heterogeneity"))
+fnf_final <- fnf_allelic_heterogeneity_results %>% filter(final_het %in% c("No heterogeneity", "Heterogeneity"))
+
+# Add a group column
+pbs_final <- pbs_final %>% mutate(group = "PBS")
+fnf_final <- fnf_final %>% mutate(group = "FN-f")
+
+# Combine into one summary table (each row represents a gene)
+combined_het_summary <- bind_rows(pbs_final, fnf_final) %>%
+  group_by(group, final_het) %>%
+  summarize(total_genes = n(), .groups = "drop") 
+
+# --- Plot the summary with a pseudo-log y-axis ----------------
+het_barplot <- ggplot(combined_het_summary, aes(x = final_het, y = total_genes, fill = final_het)) +
+  geom_col(width = 0.8) +
+  geom_text(aes(label = total_genes), vjust = -0.5, size = 3) +
+  facet_wrap(~ group, labeller = as_labeller(c(
+    "PBS" = "<span style='color:#1F78B4;'>PBS</span>",
+    "FN-f" = "<span style='color:#CD9B00;'>FN-f</span>"
+  ))) +
+  scale_fill_manual(values = c(
+    "No heterogeneity" = "grey90",
+    "Heterogeneity" = "#F8766D"   # set a contrasting color, adjust as desired
+  )) +
+  scale_y_continuous(
+    name = "Gene Count",
+    trans = scales::pseudo_log_trans(base = 2),
+    breaks = c(0, 10, 50, 100, 200, 400, 800, 1600),   # adjust your breaks based on your counts
+    labels = scales::comma,
+    expand = expansion(mult = c(0, 0.1))
+  ) +
+  scale_x_discrete(name = "Heterogeneity Category") +
+  theme_minimal() +
+  theme(
+    strip.placement = "outside",
+    strip.text = element_markdown(size = 8, margin = margin(b = 5)),
+    axis.line = element_line(size = 0.25),
+    axis.ticks = element_line(color = "black", size = 0.25),
+    panel.grid = element_blank(),
+    legend.position = "right",
+    text = element_text(family = "Helvetica")
+  )
+
+# Save the plot
+save(het_barplot, file = "/work/users/s/e/seyoun/CQTL_sQTL/output/revision/plots/het_barplot.rda")
+
+#----------------------------------------------------------------
+pdf(file = "revision/plots/pbs_fnf_sqtl_eqtl_overlap_barplot.pdf",   # The directory you want to save the file in
+    width = 6, # The width of the plot in inches
+    height = 4.5)
+
+pageCreate(width = 6, height =4.5 , default.units = "inches", showGuides = FALSE)
+
+load("revision/plots/eqtl_sqtl_overlapscond_Barplot.rda")
+plotGG(eqtl_sqtl_overlapscond_Barplot, x = 0.5, y = 0.5, width = 3, height = 3.5)
+
+dev.off()

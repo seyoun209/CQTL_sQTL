@@ -49,17 +49,17 @@ snrnp70_alt8_CDS_ran <- GRanges(
   strand =snrnp70_alt8_txsubsetCDS$TXSTRAND
 )
 
-# Most significant intron region SNRNP70
+# alternative exon 8 region SNRNP70
 
-intron_alt8 <- GRanges(
+alt8_exon <- GRanges(
   seqnames = "chr19",
-  ranges = IRanges(start = 49101471,end = 49104634),
+  ranges = IRanges(start = 49102114,end = 49103587),
   strand = "+"
 )
 
-as_intron_nt <- width(intron_interest_ran)
+as_exon_nt <- width(alt8_exon)
 
-as_all.ma <- as.matrix(findOverlaps(snrnp70_alt8_All_ran,intron_alt8))[2] # position of AS exon among CDS exons
+as_all.ma <- as.matrix(findOverlaps(snrnp70_alt8_All_ran,alt8_exon))[1]
 
 snrnp70_alt8out_tx.ran  <- snrnp70_alt8_All_ran[-as_all.ma]
 

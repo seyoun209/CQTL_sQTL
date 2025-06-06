@@ -416,8 +416,7 @@ oligo_barplot_full <- ggplot(combined_summary_complete, aes(x = motif, y = perc,
             family = "Helvetica") +
   labs(
     x = "Intron Motif",
-    y = "Percentage of splice intron junctions",
-    title = "Distribution of Intron Motifs"
+    y = "Percentage of splice intron junctions"
   ) +
   scale_y_continuous(
     name = "Percentage of splice intron junctions",
@@ -453,6 +452,8 @@ oligo_barplot_full <- ggplot(combined_summary_complete, aes(x = motif, y = perc,
   )
 save(oligo_barplot_full,
      file = "revision/plots/splicing_oligo_barplot_full.rda")
+
+load("revision/plots/splicing_oligo_barplot_full.rda")
 
 
 ## Differentail version
@@ -555,11 +556,16 @@ save(oligo_barplot_differential_only,
 # plot gardener to keep both plot at the same time------------------------------
 pdf(file = "revision/plots/splicing_oligo_Barplot.pdf",   # The directory you want to save the file in
     width = 7.5, # The width of the plot in inches
-    height = 3)
+    height = 6)
 
-pageCreate(width = 7.5, height =3 , default.units = "inches", showGuides = FALSE)
+pageCreate(width = 7.5, height =6 , default.units = "inches", showGuides = FALSE)
 load("revision/plots/splicing_oligo_barplot_differential_only.rda")
-plotGG(oligo_barplot_differential_only, x = 0.4, y = 0.5, width = 7, height = 2.5)
+load("revision/plots/splicing_oligo_barplot_full.rda")
+
+plotGG(oligo_barplot_full, x = 0.4, y = 0.5, width = 7, height = 2.5)
+plotGG(oligo_barplot_differential_only, x = 0.4, y = 3.5, width = 7, height = 2.5)
+
+
 dev.off()
 
 # 3. Explanation for unexpected results with the SNRNP70

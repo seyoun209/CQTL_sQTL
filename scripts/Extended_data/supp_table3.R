@@ -32,19 +32,3 @@ write_formatted_sheet <- function(wb, sheet_name, data) {
 
 
 
-# 
-Go_table <- fread("output/clu_fnf/table/GO_sig.csv")
-Pathway_table <- fread("output/clu_fnf/table/pathway_table_sig.csv")
-
-
-
-Go_table_OA <- fread("output/clu_oa/table/GO_sig.csv")
-Pathway_table_OA <- fread("output/clu_oa/table/pathway_table_sig.csv")
-
-# Create a new workbook
-wb <- createWorkbook()
-write_formatted_sheet(wb, "Pathway (PBS vs FN-f)", Pathway_table)
-write_formatted_sheet(wb, "Pathway (PBS vs OA)", Pathway_table_OA)
-write_formatted_sheet(wb, "GO (PBS vs FN-f)", Go_table)
-write_formatted_sheet(wb, "GO (PBS vs OA)", Go_table_OA)
-saveWorkbook(wb, "output/results_plots/Supp_Data/Supplementary_Data3.xlsx", overwrite = TRUE)
