@@ -39,7 +39,6 @@ colData(gse)[] <- lapply(colData(gse), factor)
 dds_gene <- DESeqDataSet(gse, design = ~ Condition)
 
 ## Filter out lowly expressed genes
-## (at least 10 counts in at least 2 samples)
 keep <- rowSums(counts(dds_gene) >= 10) >= ceiling(nrow(colData(gse))*0.10)
 dds_gene <- dds_gene[keep,]
 

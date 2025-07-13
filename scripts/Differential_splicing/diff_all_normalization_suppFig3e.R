@@ -187,9 +187,6 @@ save(SNRNP_box_barplot, file = "output/results_plots/Supplementary_figures/supp_
 ggplot(westernblot_SNRNP70, aes(x = Condition,
                           y = raw_norm,
                           fill = Condition)) +
-  #geom_box(stat="identity", alpha = 0.7,position=position_dodge()) +
-  #geom_errorbar(aes(ymin=raw_norm, ymax=raw_norm+sd), width=.2,
-  #             position=position_dodge(.9)) +
   geom_jitter(width = 0.2, color = "grey40", size = 0.25)+
   geom_boxplot(outlier.shape = NA,linewidth = 0.25, alpha = 0.7)+
   scale_fill_manual(values = c('#1e87a5','#FFB81C')) +
@@ -224,17 +221,12 @@ save(snrnp70_expBoxplot, file = "output/results_plots/Supplementary_figures/supp
 load("output/quant/differential_gene_expression_dds.rda")
 normCounts_fnf <- counts(dds_gene, normalized = TRUE)
 #load("output/quant/deGene_OA_expression_dds.rda")
-#normCounts_oa <- counts(dds_gene, normalized = TRUE)
 
 fnf_snrnp70_l2fc <- get_sample_l2fc("ENSG00000104852.15",normCounts_fnf) %>%
   dplyr::select("Donor","log2FC") %>%
   mutate(group = 'Gene')
-#oa_snrnp70_l2fc <- get_sample_l2fc("ENSG00000104852.15",normCounts_oa)
 
 
-#westernblot boxplot
-#library(emmeans)
-#library(car)
 
 
 
@@ -252,8 +244,6 @@ SNRNP70_FC_norm_fnf <- westernblot_SNRNP70 %>%
   dplyr::filter(Condition  == "FNF")
 SNRNP70_FC_norm_pbs <- westernblot_SNRNP70 %>%
   dplyr::filter(Condition  == "PBS")
-#wilcox.test(SNRNP70_FC_norm_fnf$log2FC, mu=0,alternative = "less")
-#wilcox.test(fnf_snrnp70_l2fc$log2FC, mu=0,alternative = "less")
 l2fc_SNRNP70_plotdata <- rbind(fnf_snrnp70_l2fc,SNRNP70_FC_western)
 
 logfc <- ggplot(l2fc_SNRNP70_plotdata ,

@@ -110,18 +110,12 @@ model_cov_fnf <-model.matrix(~Condition+as.factor(Donor)+
                                as.factor(RNAshippedDate)+as.factor(RNAextractionKitBatch)+
                              as.factor(FragmentBatch),
                              data=meta_ctl_fnf)
-#limma_psi_batchremove <- limma::removeBatchEffect(psi_fnf,
-#                                                  batch= as.factor(meta_ctl_fnf$RNAshippedDate),
-#                                                  batch1=as.factor(meta_ctl_fnf$RNAextractionKitBatch),
-#                                                  batch2=as.factor(meta_ctl_fnf$FragmentBatch),
-#                                                  batch3=as.factor(meta_ctl_fnf$Donor))
 limma_psi_batchremove <- limma::removeBatchEffect(psi_fnf,
                                                   batch=as.factor(meta_ctl_fnf$FragmentBatch),
                                                   batch1=as.factor(meta_ctl_fnf$RNAextractionKitBatch),
                                                   batch1=as.factor(meta_ctl_fnf$Donor))
 limma_psi_batchremove_junction <- cbind(rownames(limma_psi_batchremove), limma_psi_batchremove)
 colnames(limma_psi_batchremove_junction)[1] <- c('Junction')
-#write.table(limma_psi_batchremove_junction, file = "output/clu_fnf/psi_fnf_limma_batch_corrected",sep='\t',quote=F,row.names=F,col.names=T)
 
 limma_psi_batchremove_junction <- fread("output/clu_fnf/psi_fnf_limma_batch_corrected")
 rownames(limma_psi_batchremove_junction) <- c(limma_psi_batchremove_junction$Junction)
@@ -138,7 +132,6 @@ fnf_pca_prep <-pca_prep(ratios_fnf_qc_num,meta_ctl_fnf,remove_vars)
 
 after_batch_fnf <- ggplot(fnf_pca_batchCorr$pca_data, aes(x = PC1, y = PC2, color = Condition )) + #label = Donor, )) +
   geom_point() +
-  #geom_text_repel(size = 2, box.padding = unit(0.1, "lines")) +
   scale_color_manual(values = c("CTL" = "#74CCEC", "FNF" = "#FAB394")) +
   labs(
     title = "After batch correction",
@@ -151,7 +144,6 @@ after_batch_fnf <- ggplot(fnf_pca_batchCorr$pca_data, aes(x = PC1, y = PC2, colo
         plot.background = element_rect(fill = "transparent", color = "transparent"))
 before_batch_fnf <- ggplot(fnf_pca_prep$pca_data, aes(x = PC1, y = PC2, color = Condition )) + #label = Donor, )) +
   geom_point() +
-  #geom_text_repel(size = 2, box.padding = unit(0.1, "lines")) +
   scale_color_manual(values = c("CTL" = "#74CCEC", "FNF" = "#FAB394")) +
   labs(
     title = "After batch correction",
@@ -183,14 +175,12 @@ combined_df_nodot <- combined_df %>%
   mutate(V5 = sub("\\..*$", "", V5))
 
 subset_background_genes_ensg <- combined_df_nodot $V5 |> unique() 
-#write.table(subset_background_genes_ensg, file = "output/clu_fnf/background_gene_set.txt",sep='\t',quote=F,row.names=F,col.names=F)
 
 #-------------------------------------------------------------------------------
 #Using the new deltaPSI to combine into introns_fnf
 
 limma_psi_batchremove.df <- calculate_delta_psi(limma_psi_batchremove.df, "CTL", "FNF")
 introns_fnf_pval_include <- join_introns_deltapsi_fdr(limma_psi_batchremove.df,introns_fnf,"./output/clu_fnf/ctlvsfnf_ds_cluster_significance.txt")
-#save(introns_fnf_pval_include, file="./output/clu_fnf/introns_fnf_joinAll")
 #-------------------------------------------------------------------------------
 #finding the significant
 load("output/clu_fnf/introns_fnf_joinAll")
@@ -198,25 +188,16 @@ introns_fnf_sig <- introns_fnf_pval_include %>% dplyr::filter(p.adjust < 0.05)
 fnf_maxCluster <- introns_fnf_sig %>%
   mutate(abs_deltapsi = abs(deltapsi_batch)) %>%  # Add a new column for the absolute value of deltapsi
   group_by(clusterID) %>%
-  # Use slice_max to select the row with the maximum absolute deltapsi value
   dplyr::slice(which.max(abs_deltapsi)) %>%
-  # Ensure that ensemblID is not "."
   dplyr::filter(ensemblID != ".") %>%
-  # Optionally, remove the abs_deltapsi column if it's no longer needed
   dplyr::select(-abs_deltapsi)
 
-sig_psi_maxCluster <- fnf_maxCluster[abs(fnf_maxCluster$deltapsi_batch) > 0.2,]
-#Gene for the cluster Max
-sig_psi_maxCluster_nodot <- sig_psi_maxCluster %>%
-  mutate(ensemblID = sub("\\..*$", "", ensemblID))
-sig_gene_20_percent_diff <- sig_psi_maxCluster_nodot$ensemblID |> unique()  #Save it to ENSG
 
 sig_psi_maxCluste_psi15 <- fnf_maxCluster[abs(fnf_maxCluster$deltapsi_batch) > 0.15,]
 #Gene for the cluster Max
 sig_psi_maxCluster_nodot_psi15 <- sig_psi_maxCluste_psi15 %>%
   mutate(ensemblID = sub("\\..*$", "", ensemblID))
 sig_gene_15_percent_diff <- sig_psi_maxCluster_nodot_psi15$ensemblID |> unique()  #Save it to ENSG
-write.table(sig_gene_20_percent_diff, file = "output/clu_fnf/sig_gene_20_percent_diff.txt",sep='\t',quote=F,row.names=F,col.names=F)
 write.table(sig_gene_15_percent_diff, file = "output/clu_fnf/sig_gene_15_percent_diff.txt",sep='\t',quote=F,row.names=F,col.names=F)
 
 
@@ -242,7 +223,6 @@ ancestry_OA_df_filtered$Donor <- gsub("_r2","",ancestry_OA_df_filtered$Donor)
 ancestry_cqtl <-rbind(ancestry_df,ancestry_OA_df_filtered)
 
 meta_cqtl <- merge(meta_data,ancestry_cqtl,by="Donor",all.x=TRUE)
-#write.table(meta_cqtl, file = "output/clu_fnf/meta_cqtl",sep='\t',quote=F,row.names=F,col.names=T)
 filtered_meta_samples <- meta_cqtl %>%
   dplyr::filter(!grepl("OA", ID))
 meta_samples <-filtered_meta_samples[,2:6] |> as.data.frame()
@@ -250,10 +230,6 @@ meta_samples <-filtered_meta_samples[,2:6] |> as.data.frame()
 #-------------------------------------------------------------------------------
 #KEGG GO
 #-------------------------------------------------------------------------------
-
-## all significant differential splicing genes.
-#system("scripts/Differential_splicing/run_homer.sh /work/users/s/e/seyoun/CQTL_sQTL/output/clu_fnf/sig_gene_20_percent_diff.txt /work/users/s/e/seyoun/CQTL_sQTL/output/clu_fnf/background_gene_set.txt /work/users/s/e/seyoun/CQTL_sQTL/output/clu_fnf/homer/homer_sig_diffsplicing_all_fdr05_psi2")
-#system("scripts/Differential_splicing/run_homer.sh /work/users/s/e/seyoun/CQTL_sQTL/output/clu_fnf/sig_gene_15_percent_diff.txt /work/users/s/e/seyoun/CQTL_sQTL/output/clu_fnf/background_gene_set.txt /work/users/s/e/seyoun/CQTL_sQTL/output/clu_fnf/homer/homer_sig_diffsplicing_all_fdr05_psi15")
 
 #GO
 
@@ -315,7 +291,6 @@ ggsave(filename = "output/results_plots/Figure1_differntial_splicing/GO_barplots
 save(GO_barplots, file = "output/results_plots/Figure1_differntial_splicing/GO_barplots.rda")
 
 ##pathway Reacome + kegg
-# Read in from Homer
 reactome_data <- read_delim("output/clu_fnf/homer/homer_sig_diffsplicing_all_fdr05_psi15/reactome.txt") |>
   mutate(pval = exp(1)^logP) |>
   dplyr::filter(pval < 0.01) |>

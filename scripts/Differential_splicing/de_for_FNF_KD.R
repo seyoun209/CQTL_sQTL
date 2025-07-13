@@ -19,7 +19,6 @@ library(ggvenn)
 library(biomaRt)
 library(ggtext)
 
-#leafviz("/work/users/s/e/seyoun/crispr/02.test_seq/clu_kd/WD_KD.Rdata")
 
 diff_fnf <- fread("/work/users/s/e/seyoun/CQTL_sQTL/output/quant/sig_deGenes_pval01_l2fc15.csv")
 diff_kd <- fread("/work/users/s/e/seyoun/crispr/02.test_seq/condition_de/sig_deGenes_pval_01_l2fc15.csv")
@@ -82,7 +81,6 @@ intersect_downGenes_noVer <- sapply(strsplit(intersect_downGenes, "\\."), `[`, 1
 #up
 intersect_upGenes <- intersect(upsigGenes_fnf, upsigGenes_KD)
 intersect_upGenes_noVer <- sapply(strsplit(intersect_upGenes, "\\."), `[`, 1)
-#ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
 
 # Get HGNC symbols
 down_hgnc_mapping <- getBM(attributes = c('ensembl_gene_id', 'hgnc_symbol'), 
@@ -115,7 +113,6 @@ up_kd_hgnc <- getBM(attributes = c('ensembl_gene_id', 'hgnc_symbol'),
                          values = setdiff_up_kd_noVer, 
                          mart = ensembl) |> write_csv("/work/users/s/e/seyoun/crispr/02.test_seq/condition_de/up_KD_only_gene.csv")
 
-#Up-regulated KD only
 #Pathway (Upregulated)
 up_KD_pathway <- fread()
 down_KD_pathway <- fread("/work/users/s/e/seyoun/crispr/02.test_seq/condition_de/pathway_go_results/down_kd_only_pathway.txt")
@@ -135,10 +132,6 @@ down_KD_GO <- fread("/work/users/s/e/seyoun/crispr/02.test_seq/condition_de/path
 ggplot(kegg_plotting, aes(x = `-log10(q-value)`, y = pathway, fill = category)) +
   geom_vline(xintercept = 5, color = "grey75", alpha = 0.4) +
   geom_vline(xintercept = 10, color = "grey75", alpha = 0.4) +
-  # geom_vline(xintercept = 15, color = "grey75", alpha = 0.4) +
-  # geom_vline(xintercept = 20, color = "grey75", alpha = 0.4) +
-  # geom_vline(xintercept = 25, color = "grey75", alpha = 0.4) +
-  # geom_vline(xintercept = 30, color = "grey75", alpha = 0.4) +
   geom_bar(stat = "identity") +
   scale_x_continuous(expand = c(0, 0), name = "-log~10~qval", limits = c(0, 10),
                      breaks = seq(0, 25, 5)) +
@@ -159,6 +152,4 @@ ggplot(kegg_plotting, aes(x = `-log10(q-value)`, y = pathway, fill = category)) 
         panel.spacing = unit(0, "mm"), 
         plot.title = element_text(hjust = 0.5, face = "bold", size = 14)) +
   ggtitle("KEGG Pathways")
-
-#-------------------------------------------------------------------------------
 

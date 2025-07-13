@@ -284,12 +284,6 @@ log2_plot <- ggplot(gene_l2fc_all, aes(x = Exon, y = log2FoldChange, fill = grou
         legend.text = element_text(size = 5),
         plot.title = element_text(hjust = 0.5, family = "Helvetica",
                                   size = 10, margin = margin(b=-3)))
-#ggtitle("Exon-specific regulation SNRNP70 ")
-
-#log2_plot_text <- log2_plot + geom_text(data = subset(gene_l2fc_all, category != ""),
-#                                        aes(label = category, y = log2FoldChange-0.02 ),  # Adjust y offset as needed
-#                                        position = position_dodge(width = dodge_width),
-#                                        vjust = 0 ,color = "red", size = 2.5)
 
 # Display the plot
 library(patchwork)

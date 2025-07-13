@@ -41,15 +41,11 @@ ratios_oa <- counts_oa %>%
   set_rownames(rownames(counts_oa)) %>%
   dplyr::select(-clu)
 
-ratios_oa_qc = ratios_oa[rowMeans(is.na(ratios_oa)) <= 0.4,,drop=F ] #Try to remove 40% or less NA values in each rows
-#From 134376 to 133944 --> it is dropped 432
 row_means = rowMeans(ratios_oa_qc, na.rm = T) #calculate the mean without NAs in the rows. 
 row_means_outer = outer(row_means, rep(1,ncol(ratios_oa_qc)))# making outlier to the NAs
 ratios_oa_qc[is.na(ratios_oa_qc)] = row_means_outer[is.na(ratios_oa_qc)] # instead of Na, add the rowmean
 colnames(ratios_oa_qc) <- colnames(ratios_oa_qc)
 ratios_oa_qc <- cbind(rownames(ratios_oa_qc), ratios_oa_qc)
-colnames(ratios_oa_qc)[1] <- c('Junction')
-#write.table(ratios_oa_qc, file = "output/clu_oa/ratio_oa.txt",sep='\t',quote=F,row.names=F,col.names=T)
 ratios_oa_qc <- read.table("output/clu_oa/ratio_oa.txt",sep='\t',header=T) |> as.data.frame()
 
 
@@ -73,8 +69,6 @@ ancestry_OA_df_filtered <- ancestry_OA_df %>%
 ancestry_OA_df_filtered$Donor <- gsub("_r2","",ancestry_OA_df_filtered$Donor)
 
 ancestry_cqtl <-rbind(ancestry_df,ancestry_OA_df_filtered)
-meta_cqtl <- merge(meta_data,ancestry_cqtl,by="Donor",all.x=TRUE)
-#write.table(meta_cqtl, file = "output/clu_fnf/meta_cqtl",sep='\t',quote=F,row.names=F,col.names=T)
 
 meta_cqtl <- fread("output/clu_fnf/meta_cqtl")
 meta_ctl_fnf <- meta_cqtl[!meta_cqtl$Donor %in% config$samples_to_omit, ] %>%
@@ -82,21 +76,6 @@ meta_ctl_fnf <- meta_cqtl[!meta_cqtl$Donor %in% config$samples_to_omit, ] %>%
 meta_ctl_oa <- meta_ctl_fnf %>% dplyr::filter(Condition %in% c('CTL','OA')) %>%
   mutate(FragmentBatch = ifelse(Condition == "OA", "batch0", FragmentBatch))
   
-#-------------------------------------------------------------------------------
-#corrected batch with Limma
-#-------------------------------------------------------------------------------
-# PBS vs OA won't fix the batch correction because only PBS data have Fragmentbatch information and RNAextractionKitbatch or SequencingBatch have more tha 1 in PBS data. 
-# rownames(ratios_oa_qc) <- ratios_oa_qc[,1]
-# ratios_oa_qc <- ratios_oa_qc[, -1]
-# 
-# model_oa <-model.matrix(~Condition,data=meta_ctl_oa)
-# 
-# limma_oa_batchcorr <- limma::removeBatchEffect(ratios_oa_qc,batch=as.factor(meta_ctl_oa$Donor))
-# limma_oa_batchcorr_junc <- cbind(rownames(limma_oa_batchcorr), limma_oa_batchcorr)
-# colnames(limma_oa_batchcorr_junc)[1] <- c('Junction')
-# write.table(limma_oa_batchcorr_junc, file = "output/clu_oa/psi_oa_limma_batchCorr",sep='\t',quote=F,row.names=F,col.names=T)
-# limma_oa_batchcorr_df <- limma_oa_batchcorr |> as.data.frame()
-# limma_oa_batchcorr_df <- calculate_delta_psi(limma_oa_batchcorr_df, "CTL", "OA")
 
 OA_deltapsiCalc_df <- calculate_delta_psi(ratios_oa_qc, "CTL", "OA")
 
@@ -107,7 +86,6 @@ oa_pca_prep <-pca_prep(ratios_oa_qc,meta_ctl_oa,remove_vars)
 
 before_batch_oa <- ggplot(oa_pca_prep$pca_data, aes(x = PC1, y = PC2, color = Condition ), label = oa_pca_prep$Donor ) +
   geom_point() +
-  #geom_text_repel(size = 2, box.padding = unit(0.1, "lines")) +
   scale_color_manual(values = c("CTL" = "#74CCEC", "OA" = "#FAB394")) +
   labs(
     title = "Before batch correction",
@@ -139,7 +117,6 @@ combined_df_nodot <- combined_df %>%
   mutate(V5 = sub("\\..*$", "", V5))
 
 subset_background_genes_ensg <- combined_df_nodot $V5 |> unique() 
-#write.table(subset_background_genes_ensg, file = "output/clu_oa/background_OA_genes_set.txt",sep='\t',quote=F,row.names=F,col.names=F)
 
 #-------------------------------------------------------------------------------
 introns_oa_pval_include <- join_introns_deltapsi_fdr(OA_deltapsiCalc_df,introns_oa,"./output/clu_oa/ctlvsoa_ds_cluster_significance.txt")
@@ -148,35 +125,21 @@ introns_oa_sig <- introns_oa_pval_include %>% dplyr::filter(p.adjust <= 0.05)
 oa_maxCluster <- introns_oa_sig %>%
   mutate(abs_deltapsi = abs(deltapsi_batch)) %>%  # Add a new column for the absolute value of deltapsi
   group_by(clusterID) %>%
-  # Use slice_max to select the row with the maximum absolute deltapsi value
   dplyr::slice(which.max(abs_deltapsi)) %>%
-  # Ensure that ensemblID is not "."
   dplyr::filter(ensemblID != ".") %>%
-  # Optionally, remove the abs_deltapsi column if it's no longer needed
   dplyr::select(-abs_deltapsi)
 
-sig_psi_maxCluster_oa_psi2 <- oa_maxCluster[abs(oa_maxCluster$deltapsi_batch) >= 0.20,]
-#Gene for the cluster Max
-sig_psi_maxCluster_oa_psi2_modified <- sig_psi_maxCluster_oa_psi2 %>%
-  mutate(ensemblID = sub("\\..*$", "", ensemblID))
-sig_gene_20_percent_diff_oa <- sig_psi_maxCluster_oa_psi2_modified$ensemblID |> unique()  #Save it to ENSG
 
 sig_psi_maxCluster_oa_psi15 <- oa_maxCluster[abs(oa_maxCluster$deltapsi_batch) >= 0.15,]
 #Gene for the cluster Max
 sig_psi_maxCluster_oa_psi15_modified <- sig_psi_maxCluster_oa_psi15 %>%
   mutate(ensemblID = sub("\\..*$", "", ensemblID))
 sig_gene_15_percent_diff_oa <- sig_psi_maxCluster_oa_psi15_modified$ensemblID |> unique()  #Save it to ENSG
-write.table(sig_gene_20_percent_diff_oa, file = "output/clu_oa/sig_gene_20_percent_diff.txt",sep='\t',quote=F,row.names=F,col.names=F)
 write.table(sig_gene_15_percent_diff_oa, file = "output/clu_oa/sig_gene_15_percent_diff.txt",sep='\t',quote=F,row.names=F,col.names=F)
 
 #-------------------------------------------------------------------------------
 #KEGG GO
 #-------------------------------------------------------------------------------
-
-## all significant differential splicing genes.
-#system("scripts/Differential_splicing/run_homer.sh /work/users/s/e/seyoun/CQTL_sQTL/output/clu_oa/sig_gene_20_percent_diff.txt /work/users/s/e/seyoun/CQTL_sQTL/output/clu_oa/background_OA_genes_set.txt /work/users/s/e/seyoun/CQTL_sQTL/output/clu_oa/homer/homer_sig_diffsplicing_all_fdr05_psi2")
-#system("scripts/Differential_splicing/run_homer.sh /work/users/s/e/seyoun/CQTL_sQTL/output/clu_oa/sig_gene_15_percent_diff.txt /work/users/s/e/seyoun/CQTL_sQTL/output/clu_oa/background_OA_genes_set.txt /work/users/s/e/seyoun/CQTL_sQTL/output/clu_oa/homer/homer_sig_diffsplicing_all_fdr05_psi15")
-
 #GO
 
 go_data <- read_delim("output/clu_oa/homer/homer_sig_diffsplicing_all_fdr05_psi15/biological_process.txt") |>
@@ -208,8 +171,6 @@ OAGO_barplots <- ggplot(Siggo_plotting, aes(x = `-log10pval`, y = parentTerm, fi
   geom_vline(xintercept = 4, color = "grey75", alpha = 0.4) +
   geom_vline(xintercept = 5, color = "grey75", alpha = 0.4) +
   geom_vline(xintercept = 8, color = "grey75", alpha = 0.4) +
-  #geom_vline(xintercept =15 , color = "grey75", alpha = 0.4) +
-  geom_bar(stat = "identity") +
   scale_x_continuous(limits = c(0, 8), expand = c(0, 0), name = "-log~10~pval",
                      breaks = seq(0, 8, 2)) +
   scale_fill_manual(values = "#C8F0BF") +
@@ -237,8 +198,6 @@ ggsave(filename = "output/results_plots/Figure1_differntial_splicing/OAGO_barplo
 save(OAGO_barplots, file = "output/results_plots/Figure1_differntial_splicing/OAGO_barplots.rda")
 
 ##pathway Reacome + kegg
-# Read in from Homer
-reactome_data <- read_delim("output/clu_oa/homer/homer_sig_diffsplicing_all_fdr05_psi15/reactome.txt") |>
   mutate(pval = exp(1)^logP) |>
   dplyr::filter(pval < 0.01) |>
   distinct(Term, .keep_all = TRUE) |>
@@ -274,12 +233,8 @@ OApathway_barplots <- ggplot(pathway_plotting, aes(x = `-log10pval`, y = Term)) 
   geom_vline(xintercept = 2, color = "grey75", alpha = 0.4) +
   geom_vline(xintercept = 3, color = "grey75", alpha = 0.4) +
   geom_vline(xintercept = 4, color = "grey75", alpha = 0.4) +
-  # geom_vline(xintercept = 5, color = "grey75", alpha = 0.4) +
-  geom_bar(stat = "identity", fill="#C8F0BF") +
   scale_x_continuous(expand = c(0, 0), name = "-log~10~pval", limits = c(0, 4),
                      breaks = seq(0, 4, 1)) +
-  #facet_wrap(~category, ncol = 1, strip.position = "left", scales = "free_y") +
-  geom_text(aes(x = 0, label = Term), hjust = 0, family = "Helvetica",
             size = 2.5) +
   theme(panel.background = element_rect(fill = 'transparent', color = "transparent"),
         plot.background = element_rect(fill = 'transparent', color = "transparent"),
@@ -382,13 +337,6 @@ down_test_OA <- wilcox.test(x = as.numeric(OA_from_all_fnf_down$deltaPSI),
 cat("p-value:", format.pval(up_test_OA$p.value, digits = 3), "\n")
 cat("p-value:", format.pval(down_test_OA$p.value, digits = 3), "\n")
 
-
-
-#oa_boxplot_plot(data = fnf_all_OA_subset, up_wilcox_test = up_test_OA,
-#                down_wilcox_test = down_test_OA,
-#                x = unit(5.5, "native"),
-#                y = unit(5.6, "native"), width = 3.5, height = 3)
-
 oa_boxplots <- ggplot(sig_OA_subset_psi15, aes(x = group, y = deltaPSI, fill = group)) +
   geom_hline(yintercept = 0, lty = 2, color = "grey25", linewidth = 0.25) +
   geom_jitter(width = 0.2, color = "grey40", size = 0.25) +
@@ -423,8 +371,4 @@ oa_boxplots <- ggplot(sig_OA_subset_psi15, aes(x = group, y = deltaPSI, fill = g
 ggsave(filename = "output/results_plots/Figure1_differntial_splicing/Fig1E_OA_boxplot.pdf",
        plot = oa_boxplots, width = 6, height = 4.5, units = "in")
 save(oa_boxplots, file = "output/results_plots/Supplementary_figures/Fig1E_OA_boxplot.rda")
-
-
-
-
 

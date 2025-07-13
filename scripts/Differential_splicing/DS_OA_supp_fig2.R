@@ -30,7 +30,6 @@ meta_cqtl_subset <- meta_cqtl[!meta_cqtl$Donor %in% config$samples_to_omit, ]
 meta_ctl_oa <- meta_cqtl_subset %>% dplyr::filter(Condition %in% c('CTL','OA')) %>%
   dplyr::select("ID","Age","Predicted_Ancestry","Sex", "Condition")
 rownames(meta_ctl_oa) <- meta_ctl_oa$ID
-#meta_ctl_oa <- meta_ctl_oa %>% dplyr::select(-"ID")
 
 #Subset delta PSI 15% diff and FDR < 0.05
 ratios_oa_qc <- read.table("output/clu_oa/ratio_oa.txt",sep='\t',header=T) |> as.data.frame()
@@ -91,9 +90,6 @@ pheatmap::pheatmap(data_subset_norm,
                    fontsize = 5,
                    width = 1,
                    height = 1,
-                   #cutree_rows = 2,
-                   #cutree_cols = 2,
-                   #labels_row = labels,
                    color = colorRampPalette(c("#097EA4", "black", "#BFA527"))(50),
                    breaks = brks
 )
@@ -245,11 +241,6 @@ overlaps_intron_junctions_all <- list("PBS vs. FN-f" = fnf_psi_same_direction_fi
 overlaps_intersect_match <- intersect(fnf_psi_same_direction_filtered$loc,oa_psi_same_direction_filtered$loc)
 fnf_psi_subset_matches <- fnf_psi_same_direction_filtered %>% dplyr::filter(loc %in% overlaps_intersect_match)
 oa_psi_subset_matches <- oa_psi_same_direction_filtered %>% dplyr::filter(loc %in% overlaps_intersect_match)
-#ggvenn(
-#  overlaps_intron_junctions_all,
-#  fill_color =   c("#FDCDAC", "#CBD5E8"),
-#  stroke_size = 0.5, set_name_size = 4,show_outside = "none",
-#)
 
 
 overlaps_venn <- ggvenn(overlaps_intron_junctions_all, 
@@ -294,8 +285,6 @@ chart_oa <- table(highconf_oa$group) |> as.data.frame() %>%
   mutate(group="PBS vs. OA") %>%
   dplyr::rename(type = Var1)
 
-#overlaps_both_test <- highconf_fnf %>% dplyr::filter(loc %in% intersect(highconf_fnf$loc,highconf_oa$loc)) |> nrow()
-combined_chart <- rbind(chart_fnf, chart_oa)
 combined_chart$group <- factor(combined_chart$group, levels = c("PBS vs. OA","PBS vs. FN-f"))
 
 highConf_barPlot <- ggplot(combined_chart, aes(x = group, y = Freq, fill = group)) +
