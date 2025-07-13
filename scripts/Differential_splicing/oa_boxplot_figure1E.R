@@ -143,6 +143,7 @@ subset_background_genes_ensg <- combined_df_nodot $V5 |> unique()
 
 #-------------------------------------------------------------------------------
 introns_oa_pval_include <- join_introns_deltapsi_fdr(OA_deltapsiCalc_df,introns_oa,"./output/clu_oa/ctlvsoa_ds_cluster_significance.txt")
+load("./output/clu_oa/introns_oa_joinAll")
 introns_oa_sig <- introns_oa_pval_include %>% dplyr::filter(p.adjust <= 0.05)
 oa_maxCluster <- introns_oa_sig %>%
   mutate(abs_deltapsi = abs(deltapsi_batch)) %>%  # Add a new column for the absolute value of deltapsi
@@ -323,8 +324,10 @@ fnf_all_OA_subset <- fnf_all_OA_subset |>
 
 
 
-
-
+limma_psi_batchremove_junction <- fread("output/clu_fnf/psi_fnf_limma_batch_corrected")
+rownames(limma_psi_batchremove_junction) <- c(limma_psi_batchremove_junction$Junction)
+limma_psi_batchremove.df <- limma_psi_batchremove_junction %>% dplyr::select(-"Junction")
+limma_psi_batchremove.df <- calculate_delta_psi(limma_psi_batchremove.df, "CTL", "FNF")
 
 fnf_psi_batchCorr_junction <- cbind(rownames(limma_psi_batchremove.df), limma_psi_batchremove.df)
 colnames(fnf_psi_batchCorr_junction)[1] <- c('Junction')
@@ -346,6 +349,15 @@ OA_from_all_fnf_down <- ratios_fnf %>%
 
 introns_ids_common <- c(rownames(OA_from_all_fnf_up), rownames(OA_from_all_fnf_down))
 
+load("./output/clu_fnf/introns_fnf_joinAll")
+
+introns_fnf_sig <- introns_fnf_pval_include %>% dplyr::filter(p.adjust < 0.05) %>%
+  mutate(loc = str_split(phe_id, ":") %>%
+           map_chr(~ paste(.x[1:3], collapse = ":")))
+introns_oa_sig <- introns_oa_sig %>%
+  mutate(loc = str_split(phe_id, ":") %>%
+           map_chr(~ paste(.x[1:3], collapse = ":")))
+
 down_fnf_common_subset <- introns_fnf_sig %>% 
   dplyr::filter(phe_id %in% rownames(OA_from_all_fnf_down))  %>% 
   arrange(deltapsi_batch) %>%
@@ -354,7 +366,7 @@ up_fnf_common_subset <- introns_fnf_sig %>%
   dplyr::filter(phe_id %in% rownames(OA_from_all_fnf_up))  %>% 
   arrange(deltapsi_batch) %>%
   dplyr::filter(deltapsi_batch > 0)
-
+introns_fnf_all_sig <- introns_fnf_sig %>% dplyr::filter(abs(deltapsi_batch) > 0.15)
 intersect(unique(introns_fnf_all_sig$gene), unique(c(down_fnf_common_subset$genes,up_fnf_common_subset$genes)))
 
 # wilcox test
