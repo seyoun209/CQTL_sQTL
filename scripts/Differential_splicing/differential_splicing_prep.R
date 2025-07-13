@@ -1,9 +1,16 @@
-# Making boxplots for the QTL for shared, PBS or FNF treated
-## Author: Seyoun Byun
-## Date: 03.08.2024
-## Edited:06.13.2024
-#-------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Script: differential_splicing_prep.R
+# Author: Seyoun Byun
+# Date: 2024-03-08
+# Last Edited: 2024-06-13
+# Description: Differential splicing analysis and visualization for CQTL_sQTL.
+# ------------------------------------------------------------------------------
+
+# ---- Setup ----
+# Set working directory (consider using relative paths or here::here() for portability)
 setwd("/work/users/s/e/seyoun/CQTL_sQTL")
+
+# Load required packages
 library(limma)
 library(magrittr)
 library(data.table)
@@ -18,9 +25,10 @@ library(grid)
 library(ggrepel)
 library(leafcutter)
 library(gridExtra)
-library(grid)
 library(rrvgo)
 library(gprofiler2)
+
+# Source utility functions
 source("scripts/utils/utils.R")
 
 

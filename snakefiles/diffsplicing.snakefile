@@ -108,13 +108,3 @@ rule junc:
         {params.regtoolVer} junctions extract -a 8 -m 50 -M 500000 -s XS {input.bam2} -o {output.junc_wasp}  2> {log.err_wasp}
         """
 
-
-
-
-
-
-
-
-
-
-
