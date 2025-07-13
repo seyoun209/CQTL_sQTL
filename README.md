@@ -1,4 +1,5 @@
 # CQTL_sQTL
+[![DOI](https://zenodo.org/badge/748754087.svg)](https://doi.org/10.5281/zenodo.15875183)
 
 This pipeline is used for processing and analyzing differential splicing, sQTLs, re-sQTLs, and colocalizations.
 
