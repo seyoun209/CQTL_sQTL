@@ -23,7 +23,6 @@ rule create_vcf:
         mkdir -p output/geno
         bcftools view -s "^{params.samples_to_exclude}" {params.raw_vcf} -Oz -o {output.vcf}
         tabix -p vcf {output.vcf}
-
         """
 
 rule processVCF:
@@ -39,11 +38,9 @@ rule processVCF:
     params:
         samtoolsVer=config['samtoolsVers'],
         VCF_OA=config['vcf_oa']
-    
     log:
         out="output/logs/processVCF.out",
         err="output/logs/processVCF.err"
-
     shell:
         """
         ml samtools/{params.samtoolsVer}
@@ -52,17 +49,9 @@ rule processVCF:
         mkdir -p output/geno/oa_geno
 
         # Run PBS
-
         sh /work/users/s/e/seyoun/CQTL_sQTL/scripts/namechange.sh {input.VCF} {input.PBS}  {output.pbs_matched} 1> {log.out} 2> {log.err}
-
         # Run FNF
-
         sh /work/users/s/e/seyoun/CQTL_sQTL/scripts/namechange.sh {input.VCF} {input.FNF}  {output.fnf_matched}
-        
-         
         # Run OA
-
         sh /work/users/s/e/seyoun/CQTL_sQTL/scripts/namechange.sh {params.VCF_OA} {input.OA}  {output.oa_matched}
-        
         """
-
